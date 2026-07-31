@@ -1,0 +1,25 @@
+{
+  "name": "@image-to-ppt/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./canonical": "./src/canonical.mjs",
+    "./compile": "./src/compile-render-plane.mjs",
+    "./materialize": "./src/materialize-task-output.mjs",
+    "./prepare": "./src/prepare-authored-bundle.mjs",
+    "./resources": "./src/resources.mjs",
+    "./text-index": "./src/text-index.mjs",
+    "./validate": "./src/validate-task-bundle.mjs"
+  },
+  "files": [
+    "src/",
+    "schema/",
+    "examples/"
+  ],
+  "dependencies": {
+    "ajv": "8.20.0",
+    "canonicalize": "2.1.0"
+  }
+}

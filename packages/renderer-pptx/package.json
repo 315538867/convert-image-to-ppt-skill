@@ -1,0 +1,17 @@
+{
+  "name": "@image-to-ppt/renderer-pptx",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./artifact-tool": "./src/artifact-tool-loader.mjs",
+    "./inspect": "./src/inspect-pptx.mjs",
+    "./render": "./src/render-pptx.mjs"
+  },
+  "dependencies": {
+    "@image-to-ppt/core": "0.1.0",
+    "@xmldom/xmldom": "0.8.13",
+    "fflate": "0.8.3"
+  }
+}

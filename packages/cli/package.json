@@ -1,0 +1,18 @@
+{
+  "name": "@image-to-ppt/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "image2ppt": "./src/image2ppt.mjs",
+    "image2ppt-checkpoint": "./src/task-checkpoint.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "dependencies": {
+    "@image-to-ppt/core": "0.1.0",
+    "@image-to-ppt/renderer-pptx": "0.1.0",
+    "sharp": "0.35.3"
+  }
+}

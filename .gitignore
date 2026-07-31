@@ -1,0 +1,9 @@
+node_modules/
+dist/
+outputs/
+work/
+*.prepared-task-bundle.json
+*.source-analysis-cache.json
+*.log
+.DS_Store
+coverage/
