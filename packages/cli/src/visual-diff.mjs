@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { readCanonicalPixels } from "./source-normalizer.mjs";
 
 const DEFAULT_THRESHOLDS = {
   global: { pixel: 0.96, edge: 0.88 },
@@ -50,6 +51,15 @@ async function loadRgb(imagePath) {
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
+  return { data, width: info.width, height: info.height, channels: info.channels };
+}
+
+async function loadSourceRgb({ sourcePath, sourcePackage, canonicalPixelsPath }) {
+  if (!sourcePackage) return loadRgb(sourcePath);
+  const canonical = await readCanonicalPixels({ sourcePackage, canonicalPixelsPath });
+  const { data, info } = await sharp(canonical.data, {
+    raw: { width: canonical.width, height: canonical.height, channels: canonical.channels },
+  }).flatten({ background: "#FFFFFF" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   return { data, width: info.width, height: info.height, channels: info.channels };
 }
 
@@ -203,8 +213,11 @@ function thresholdFor(category, overrides = {}) {
   return { ...(DEFAULT_THRESHOLDS[category] ?? DEFAULT_THRESHOLDS.generic), ...(overrides[category] ?? {}) };
 }
 
-export async function compareVisuals({ sourcePath, renderedPath, regions = [], thresholds = {}, diffPath }) {
-  const [source, rendered] = await Promise.all([loadRgb(sourcePath), loadRgb(renderedPath)]);
+export async function compareVisuals({ sourcePath, sourcePackage, canonicalPixelsPath, renderedPath, regions = [], thresholds = {}, diffPath }) {
+  const [source, rendered] = await Promise.all([
+    loadSourceRgb({ sourcePath, sourcePackage, canonicalPixelsPath }),
+    loadRgb(renderedPath),
+  ]);
   if (source.width !== rendered.width || source.height !== rendered.height) {
     throw new Error(`视觉比较要求像素尺寸一致: source=${source.width}x${source.height}, rendered=${rendered.width}x${rendered.height}`);
   }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import fs from "node:fs/promises";
 import path from "node:path";
+import { runV2Conversion } from "./run-v2-conversion.mjs";
 
 function argument(name) {
   const index = process.argv.indexOf(name);
@@ -8,46 +8,22 @@ function argument(name) {
 }
 
 function usage() {
-  console.error("用法: image2ppt <source.png> --bundle <authored-task-bundle.json> --output <result.pptx> [--asset-map <digest-path-map.json>] [--analysis-cache <source-analysis-cache.json>]");
+  console.error("用法: image2ppt <source-image> --contracts <v2-author-contracts.json> --workspace <workspace-dir> [--run-id <run-id>]");
   process.exit(2);
 }
 
 async function main() {
   const sourcePath = process.argv[2];
-  const bundlePath = argument("--bundle");
-  const outputPath = argument("--output");
-  if (!sourcePath || sourcePath.startsWith("-") || !bundlePath || !outputPath) usage();
-  const [{ prepareAuthoredBundle }, { runConversion }, { loadDefaultSchema }] = await Promise.all([
-    import("@image-to-ppt/core/prepare"),
-    import("./run-conversion.mjs"),
-    import("@image-to-ppt/core/validate"),
-  ]);
-  const authored = JSON.parse(await fs.readFile(bundlePath, "utf8"));
-  const prepared = prepareAuthoredBundle(authored, loadDefaultSchema());
-  const preparedPath = outputPath.replace(/\.pptx$/i, ".prepared-task-bundle.json");
-  await fs.mkdir(path.dirname(outputPath), { recursive: true });
-  await fs.writeFile(preparedPath, `${JSON.stringify(prepared, null, 2)}\n`);
-  const result = await runConversion({
+  const contractsPath = argument("--contracts");
+  const workspaceDir = argument("--workspace");
+  if (!sourcePath || sourcePath.startsWith("-") || !contractsPath || !workspaceDir) usage();
+  const result = await runV2Conversion({
     sourcePath: path.resolve(sourcePath),
-    bundlePath: preparedPath,
-    outputPath: path.resolve(outputPath),
-    assetMapPath: argument("--asset-map"),
-    analysisCachePath: argument("--analysis-cache"),
-    strict: true,
+    contractsPath: path.resolve(contractsPath),
+    workspaceDir: path.resolve(workspaceDir),
+    runId: argument("--run-id"),
   });
-  console.log(JSON.stringify({
-    pptx: result.outputPath,
-    taskBundle: result.files.finalBundlePath,
-    preview: result.files.previewPath,
-    diff: result.files.diffPath,
-    reviewSheet: result.files.reviewSheetPath,
-    sourceAnalysisCache: result.files.sourceAnalysisCachePath,
-    analysisCacheStatus: result.analysisCache.status,
-    sourceCoverage: result.files.coveragePath,
-    sourceCoverageOverlay: result.files.coverageOverlayPath,
-    verification: result.files.verificationPath,
-    status: "passed",
-  }, null, 2));
+  console.log(JSON.stringify(result, null, 2));
 }
 
 main().catch((error) => {

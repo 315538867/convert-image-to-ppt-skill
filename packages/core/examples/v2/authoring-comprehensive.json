@@ -1,0 +1,700 @@
+{
+  "schemaVersion": 2,
+  "contracts": [
+    {
+      "schemaVersion": 2,
+      "contractKind": "source-package",
+      "sourceId": "source-authoring",
+      "rawBlob": {
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "mediaType": "image/png",
+        "byteLength": 4096,
+        "storageKey": "inputs/authoring.png",
+        "role": "raw-source",
+        "width": 1600,
+        "height": 900
+      },
+      "canonicalPixels": {
+        "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mediaType": "application/octet-stream",
+        "byteLength": 5760000,
+        "storageKey": "canonical/authoring.rgba",
+        "role": "canonical-pixels",
+        "width": 1600,
+        "height": 900,
+        "channels": 4
+      },
+      "mediaType": "image/png",
+      "pages": [
+        {
+          "pageId": "page-authoring",
+          "canvas": { "width": 1600, "height": 900, "unit": "px" },
+          "orientation": { "original": null, "applied": false }
+        }
+      ],
+      "color": { "workingSpace": "srgb" },
+      "alpha": { "present": true, "nonOpaquePixelCount": 1024 },
+      "derivedBlobs": []
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "reconstruction-spec",
+      "documentId": "document-authoring",
+      "sourcePackageRefs": ["source-authoring"],
+      "assetRefs": [
+        {
+          "digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "mediaType": "image/png",
+          "byteLength": 8192,
+          "storageKey": "assets/photo.png",
+          "role": "approved-original-image",
+          "width": 640,
+          "height": 480
+        },
+        {
+          "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "mediaType": "image/png",
+          "byteLength": 1024,
+          "storageKey": "assets/card-mask.png",
+          "role": "alpha-mask",
+          "width": 400,
+          "height": 260
+        }
+      ],
+      "pages": [
+        {
+          "pageId": "page-authoring",
+          "sourcePageRef": "page-authoring",
+          "rootNode": {
+            "id": "root",
+            "type": "group",
+            "geometry": {
+              "frame": { "x": 0, "y": 0, "width": 1600, "height": 900, "unit": "px", "coordinateSpace": "source-canvas" },
+              "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+              "bounds": {
+                "layout": { "x": 0, "y": 0, "width": 1600, "height": 900, "unit": "px", "coordinateSpace": "source-canvas" },
+                "content": { "x": 0, "y": 0, "width": 1600, "height": 900, "unit": "px", "coordinateSpace": "source-canvas" },
+                "ink": { "x": 0, "y": 0, "width": 1600, "height": 900, "unit": "px", "coordinateSpace": "source-canvas" },
+                "effect": { "x": 0, "y": 0, "width": 1600, "height": 900, "unit": "px", "coordinateSpace": "source-canvas" }
+              },
+              "clipStack": [],
+              "maskStack": []
+            },
+            "appearance": { "opacity": 1, "fills": [], "strokes": [], "effects": [], "blendMode": "normal", "isolation": true },
+            "content": { "kind": "group", "layoutMode": "absolute", "semanticRole": "slide-root" },
+            "editability": { "required": true, "requiredAspects": ["group-membership"], "allowedFallbacks": ["native"] },
+            "evidenceRefs": [],
+            "children": [
+              {
+                "id": "gradient-card",
+                "type": "shape",
+                "geometry": {
+                  "frame": { "x": 80, "y": 100, "width": 520, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                  "transform": { "kind": "affine-2d", "matrix": [0.9962, 0.0872, -0.0872, 0.9962, 0, 0] },
+                  "bounds": {
+                    "layout": { "x": 80, "y": 100, "width": 520, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "content": { "x": 96, "y": 116, "width": 488, "height": 268, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "ink": { "x": 78, "y": 98, "width": 524, "height": 304, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "effect": { "x": 62, "y": 82, "width": 568, "height": 348, "unit": "px", "coordinateSpace": "source-canvas" }
+                  },
+                  "clipStack": [],
+                  "maskStack": [
+                    {
+                      "source": { "kind": "blob", "blobDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" },
+                      "mode": "alpha",
+                      "invert": false
+                    }
+                  ]
+                },
+                "appearance": {
+                  "opacity": 0.96,
+                  "fills": [
+                    {
+                      "kind": "gradient",
+                      "gradient": {
+                        "type": "linear",
+                        "angleDeg": 28,
+                        "stops": [
+                          { "offset": 0, "color": { "space": "srgb", "components": [0.05, 0.45, 0.9], "alpha": 1 } },
+                          { "offset": 0.55, "color": { "space": "srgb", "components": [0.1, 0.8, 0.65], "alpha": 0.92 }, "midpoint": 0.42 },
+                          { "offset": 1, "color": { "space": "srgb", "components": [0.95, 0.78, 0.2], "alpha": 1 } }
+                        ]
+                      }
+                    }
+                  ],
+                  "strokes": [
+                    {
+                      "paint": { "kind": "solid", "color": { "space": "srgb", "components": [1, 1, 1], "alpha": 0.8 } },
+                      "width": { "value": 2, "unit": "px" },
+                      "alignment": "inside",
+                      "side": "all",
+                      "dash": { "pattern": [], "offset": 0 },
+                      "lineCap": "round",
+                      "lineJoin": "round"
+                    }
+                  ],
+                  "effects": [
+                    {
+                      "kind": "outer-shadow",
+                      "color": { "space": "srgb", "components": [0, 0, 0], "alpha": 0.28 },
+                      "offsetX": { "value": 0, "unit": "px" },
+                      "offsetY": { "value": 12, "unit": "px" },
+                      "blurRadius": { "value": 24, "unit": "px" },
+                      "spread": { "value": 0, "unit": "px" }
+                    }
+                  ],
+                  "blendMode": "normal",
+                  "isolation": false
+                },
+                "content": {
+                  "kind": "shape",
+                  "shapeKind": "rounded-rectangle",
+                  "cornerRadii": {
+                    "topLeft": { "value": 24, "unit": "px" },
+                    "topRight": { "value": 24, "unit": "px" },
+                    "bottomRight": { "value": 24, "unit": "px" },
+                    "bottomLeft": { "value": 24, "unit": "px" }
+                  }
+                },
+                "editability": { "required": true, "requiredAspects": ["geometry", "appearance"], "allowedFallbacks": ["native", "ooxml-postprocess", "lower-to-primitives"] },
+                "evidenceRefs": ["ev-gradient", "ev-mask"],
+                "children": []
+              },
+              {
+                "id": "title",
+                "type": "text",
+                "geometry": {
+                  "frame": { "x": 120, "y": 144, "width": 420, "height": 76, "unit": "px", "coordinateSpace": "source-canvas" },
+                  "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+                  "bounds": {
+                    "layout": { "x": 120, "y": 144, "width": 420, "height": 76, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "content": { "x": 120, "y": 144, "width": 420, "height": 76, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "ink": { "x": 126, "y": 151, "width": 318, "height": 46, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "effect": { "x": 120, "y": 144, "width": 420, "height": 76, "unit": "px", "coordinateSpace": "source-canvas" }
+                  },
+                  "clipStack": [],
+                  "maskStack": []
+                },
+                "appearance": { "opacity": 1, "fills": [], "strokes": [], "effects": [], "blendMode": "normal", "isolation": false },
+                "content": {
+                  "kind": "text",
+                  "text": "可编辑标题",
+                  "normalization": "NFC",
+                  "language": "zh-CN",
+                  "direction": "ltr",
+                  "writingMode": "horizontal-tb",
+                  "indexing": { "segmentation": "unicode-grapheme-cluster", "utf16Boundaries": [0, 1, 2, 3, 4, 5] },
+                  "runs": [
+                    {
+                      "range": { "start": 0, "end": 5 },
+                      "style": {
+                        "fontFamilies": ["PingFang SC", "Microsoft YaHei"],
+                        "fontSize": { "value": 42, "unit": "px" },
+                        "fontWeight": 700,
+                        "fontStyle": "normal",
+                        "color": { "space": "srgb", "components": [1, 1, 1], "alpha": 1 },
+                        "tracking": { "value": 1.5, "unit": "px" },
+                        "baselineShift": { "value": 0, "unit": "px" },
+                        "features": ["kern"],
+                        "variationAxes": {}
+                      }
+                    }
+                  ],
+                  "paragraphs": [
+                    {
+                      "range": { "start": 0, "end": 5 },
+                      "alignment": "left",
+                      "direction": "ltr",
+                      "indent": {
+                        "left": { "value": 0, "unit": "px" },
+                        "right": { "value": 0, "unit": "px" },
+                        "firstLine": { "value": 0, "unit": "px" }
+                      },
+                      "spacingBefore": { "value": 0, "unit": "px" },
+                      "spacingAfter": { "value": 0, "unit": "px" },
+                      "lineSpacing": { "mode": "exact", "value": 52 }
+                    }
+                  ],
+                  "hardBreakRanges": [],
+                  "layout": {
+                    "mode": "positioned-clusters",
+                    "wrapMode": "none",
+                    "overflow": "clip",
+                    "verticalAlign": "top",
+                    "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0, "unit": "px" }
+                  },
+                  "measurements": {
+                    "inkBounds": { "x": 126, "y": 151, "width": 318, "height": 46, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "visualLines": [
+                      {
+                        "range": { "start": 0, "end": 5 },
+                        "box": { "x": 120, "y": 144, "width": 330, "height": 54, "unit": "px", "coordinateSpace": "source-canvas" },
+                        "baseline": { "value": 45, "unit": "px" },
+                        "ascent": { "value": 40, "unit": "px" },
+                        "descent": { "value": 10, "unit": "px" }
+                      }
+                    ],
+                    "positionedClusters": [
+                      {
+                        "range": { "start": 0, "end": 1 },
+                        "frame": { "x": 120, "y": 144, "width": 48, "height": 54, "unit": "px", "coordinateSpace": "source-canvas" },
+                        "inkBox": { "x": 126, "y": 151, "width": 38, "height": 42, "unit": "px", "coordinateSpace": "source-canvas" },
+                        "baseline": { "value": 45, "unit": "px" },
+                        "advance": { "value": 49.5, "unit": "px" },
+                        "lineIndex": 0,
+                        "shapingIsolation": "independent",
+                        "paintMode": "glyph"
+                      }
+                    ]
+                  }
+                },
+                "editability": { "required": true, "requiredAspects": ["content", "text-style", "geometry"], "allowedFallbacks": ["native", "ooxml-postprocess"] },
+                "evidenceRefs": ["ev-title-ink"],
+                "children": []
+              },
+              {
+                "id": "photo",
+                "type": "image",
+                "geometry": {
+                  "frame": { "x": 720, "y": 90, "width": 420, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                  "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+                  "bounds": {
+                    "layout": { "x": 720, "y": 90, "width": 420, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "content": { "x": 720, "y": 90, "width": 420, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "ink": { "x": 720, "y": 90, "width": 420, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "effect": { "x": 720, "y": 90, "width": 420, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" }
+                  },
+                  "clipStack": [],
+                  "maskStack": []
+                },
+                "appearance": { "opacity": 1, "fills": [], "strokes": [], "effects": [], "blendMode": "normal", "isolation": false },
+                "content": {
+                  "kind": "image",
+                  "resourceDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                  "contentKind": "photograph",
+                  "derivation": "original-asset",
+                  "sourceRegion": { "x": 720, "y": 90, "width": 420, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                  "fitMode": "fill",
+                  "crop": { "top": 0.05, "right": 0.08, "bottom": 0.05, "left": 0.08, "unit": "ratio" },
+                  "focalPoint": { "x": 0.48, "y": 0.42, "unit": "ratio", "coordinateSpace": "local" },
+                  "subjectBounds": { "x": 0.2, "y": 0.1, "width": 0.6, "height": 0.8, "unit": "ratio", "coordinateSpace": "local" },
+                  "colorAdjustments": { "brightness": 0, "contrast": 0.05, "saturation": -0.02, "temperature": 0 },
+                  "rasterApproval": { "status": "approved-original-raster", "rationale": "源内容本身是照片，保留原始像素是正确编辑语义。" }
+                },
+                "editability": { "required": true, "requiredAspects": ["geometry", "crop"], "allowedFallbacks": ["approved-original-raster"] },
+                "evidenceRefs": ["ev-image"],
+                "children": []
+              },
+              {
+                "id": "connector",
+                "type": "connector",
+                "geometry": {
+                  "frame": { "x": 600, "y": 240, "width": 120, "height": 20, "unit": "px", "coordinateSpace": "source-canvas" },
+                  "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+                  "bounds": {
+                    "layout": { "x": 600, "y": 240, "width": 120, "height": 20, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "content": { "x": 600, "y": 240, "width": 120, "height": 20, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "ink": { "x": 600, "y": 248, "width": 120, "height": 4, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "effect": { "x": 600, "y": 240, "width": 120, "height": 20, "unit": "px", "coordinateSpace": "source-canvas" }
+                  },
+                  "clipStack": [],
+                  "maskStack": []
+                },
+                "appearance": {
+                  "opacity": 1,
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "paint": { "kind": "solid", "color": { "space": "srgb", "components": [0.15, 0.2, 0.3], "alpha": 1 } },
+                      "width": { "value": 3, "unit": "px" },
+                      "alignment": "center",
+                      "side": "all",
+                      "dash": { "pattern": [], "offset": 0 },
+                      "lineCap": "round",
+                      "lineJoin": "round",
+                      "startMarker": "none",
+                      "endMarker": "triangle"
+                    }
+                  ],
+                  "effects": [],
+                  "blendMode": "normal",
+                  "isolation": false
+                },
+                "content": {
+                  "kind": "connector",
+                  "routing": "elbow",
+                  "start": { "kind": "node-anchor", "nodeRef": "gradient-card", "anchor": "right" },
+                  "end": { "kind": "node-anchor", "nodeRef": "photo", "anchor": "left" },
+                  "waypoints": [
+                    { "x": 660, "y": 250, "unit": "px", "coordinateSpace": "source-canvas" }
+                  ]
+                },
+                "editability": { "required": true, "requiredAspects": ["connector-endpoints", "appearance"], "allowedFallbacks": ["native", "lower-to-primitives"] },
+                "evidenceRefs": ["ev-connector"],
+                "children": []
+              },
+              {
+                "id": "table",
+                "type": "table",
+                "geometry": {
+                  "frame": { "x": 80, "y": 500, "width": 620, "height": 180, "unit": "px", "coordinateSpace": "source-canvas" },
+                  "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+                  "bounds": {
+                    "layout": { "x": 80, "y": 500, "width": 620, "height": 180, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "content": { "x": 80, "y": 500, "width": 620, "height": 180, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "ink": { "x": 80, "y": 500, "width": 620, "height": 180, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "effect": { "x": 80, "y": 500, "width": 620, "height": 180, "unit": "px", "coordinateSpace": "source-canvas" }
+                  },
+                  "clipStack": [],
+                  "maskStack": []
+                },
+                "appearance": { "opacity": 1, "fills": [], "strokes": [], "effects": [], "blendMode": "normal", "isolation": false },
+                "content": {
+                  "kind": "table",
+                  "columnWidths": [{ "value": 310, "unit": "px" }, { "value": 310, "unit": "px" }],
+                  "rowHeights": [{ "value": 90, "unit": "px" }],
+                  "headerRows": 1,
+                  "headerColumns": 0
+                },
+                "editability": { "required": true, "requiredAspects": ["table-structure", "appearance"], "allowedFallbacks": ["native", "lower-to-primitives"] },
+                "evidenceRefs": [],
+                "children": [
+                  {
+                    "id": "table-row-0",
+                    "type": "table-row",
+                    "geometry": {
+                      "frame": { "x": 80, "y": 500, "width": 620, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                      "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+                      "bounds": {
+                        "layout": { "x": 80, "y": 500, "width": 620, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                        "content": { "x": 80, "y": 500, "width": 620, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                        "ink": { "x": 80, "y": 500, "width": 620, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                        "effect": { "x": 80, "y": 500, "width": 620, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" }
+                      },
+                      "clipStack": [],
+                      "maskStack": []
+                    },
+                    "appearance": { "opacity": 1, "fills": [], "strokes": [], "effects": [], "blendMode": "normal", "isolation": false },
+                    "content": { "kind": "table-row", "rowIndex": 0, "height": { "value": 90, "unit": "px" } },
+                    "editability": { "required": true, "requiredAspects": ["table-structure"], "allowedFallbacks": ["native", "lower-to-primitives"] },
+                    "evidenceRefs": [],
+                    "children": [
+                      {
+                        "id": "cell-a",
+                        "type": "table-cell",
+                        "geometry": {
+                          "frame": { "x": 80, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                          "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+                          "bounds": {
+                            "layout": { "x": 80, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                            "content": { "x": 92, "y": 512, "width": 286, "height": 66, "unit": "px", "coordinateSpace": "source-canvas" },
+                            "ink": { "x": 80, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                            "effect": { "x": 80, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" }
+                          },
+                          "clipStack": [],
+                          "maskStack": []
+                        },
+                        "appearance": {
+                          "opacity": 1,
+                          "fills": [{ "kind": "solid", "color": { "space": "srgb", "components": [0.94, 0.96, 1], "alpha": 1 } }],
+                          "strokes": [],
+                          "effects": [],
+                          "blendMode": "normal",
+                          "isolation": false
+                        },
+                        "content": {
+                          "kind": "table-cell",
+                          "cellId": "cell-a",
+                          "rowIndex": 0,
+                          "columnIndex": 0,
+                          "rowSpan": 1,
+                          "columnSpan": 1,
+                          "padding": { "top": 12, "right": 12, "bottom": 12, "left": 12, "unit": "px" },
+                          "verticalAlign": "middle",
+                          "horizontalAlign": "left"
+                        },
+                        "editability": { "required": true, "requiredAspects": ["table-structure", "appearance"], "allowedFallbacks": ["native", "lower-to-primitives"] },
+                        "evidenceRefs": ["ev-cell"],
+                        "children": []
+                      },
+                      {
+                        "id": "cell-b",
+                        "type": "table-cell",
+                        "geometry": {
+                          "frame": { "x": 390, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                          "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+                          "bounds": {
+                            "layout": { "x": 390, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                            "content": { "x": 402, "y": 512, "width": 286, "height": 66, "unit": "px", "coordinateSpace": "source-canvas" },
+                            "ink": { "x": 390, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+                            "effect": { "x": 390, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" }
+                          },
+                          "clipStack": [],
+                          "maskStack": []
+                        },
+                        "appearance": { "opacity": 1, "fills": [], "strokes": [], "effects": [], "blendMode": "normal", "isolation": false },
+                        "content": {
+                          "kind": "table-cell",
+                          "cellId": "cell-b",
+                          "rowIndex": 0,
+                          "columnIndex": 1,
+                          "rowSpan": 1,
+                          "columnSpan": 1,
+                          "padding": { "top": 12, "right": 12, "bottom": 12, "left": 12, "unit": "px" },
+                          "verticalAlign": "middle",
+                          "horizontalAlign": "right"
+                        },
+                        "editability": { "required": true, "requiredAspects": ["table-structure"], "allowedFallbacks": ["native", "lower-to-primitives"] },
+                        "evidenceRefs": [],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "chart",
+                "type": "chart",
+                "geometry": {
+                  "frame": { "x": 820, "y": 480, "width": 620, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                  "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+                  "bounds": {
+                    "layout": { "x": 820, "y": 480, "width": 620, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "content": { "x": 840, "y": 500, "width": 580, "height": 260, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "ink": { "x": 820, "y": 480, "width": 620, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+                    "effect": { "x": 820, "y": 480, "width": 620, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" }
+                  },
+                  "clipStack": [],
+                  "maskStack": []
+                },
+                "appearance": { "opacity": 1, "fills": [], "strokes": [], "effects": [], "blendMode": "normal", "isolation": false },
+                "content": {
+                  "kind": "chart",
+                  "chartType": "bar",
+                  "dataSemantics": "unknown",
+                  "axes": [{ "axisId": "axis-y", "role": "y", "scale": "unknown" }],
+                  "legend": { "visible": false, "position": "none" },
+                  "series": []
+                },
+                "editability": { "required": true, "requiredAspects": ["chart-primitives"], "allowedFallbacks": ["lower-to-primitives"] },
+                "evidenceRefs": [],
+                "children": [
+                  {
+                    "id": "chart-bar-1",
+                    "type": "shape",
+                    "geometry": {
+                      "frame": { "x": 900, "y": 620, "width": 90, "height": 120, "unit": "px", "coordinateSpace": "source-canvas" },
+                      "transform": { "kind": "affine-2d", "matrix": [1, 0, 0, 1, 0, 0] },
+                      "bounds": {
+                        "layout": { "x": 900, "y": 620, "width": 90, "height": 120, "unit": "px", "coordinateSpace": "source-canvas" },
+                        "content": { "x": 900, "y": 620, "width": 90, "height": 120, "unit": "px", "coordinateSpace": "source-canvas" },
+                        "ink": { "x": 900, "y": 620, "width": 90, "height": 120, "unit": "px", "coordinateSpace": "source-canvas" },
+                        "effect": { "x": 900, "y": 620, "width": 90, "height": 120, "unit": "px", "coordinateSpace": "source-canvas" }
+                      },
+                      "clipStack": [],
+                      "maskStack": []
+                    },
+                    "appearance": {
+                      "opacity": 1,
+                      "fills": [{ "kind": "solid", "color": { "space": "srgb", "components": [0.2, 0.55, 0.95], "alpha": 1 } }],
+                      "strokes": [],
+                      "effects": [],
+                      "blendMode": "normal",
+                      "isolation": false
+                    },
+                    "content": { "kind": "shape", "shapeKind": "rectangle" },
+                    "editability": { "required": true, "requiredAspects": ["geometry", "appearance"], "allowedFallbacks": ["native"] },
+                    "evidenceRefs": ["ev-chart-primitive"],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "targetIntent": {
+        "format": "pptx",
+        "editableTextRequired": true,
+        "simpleIconsEditableRequired": true,
+        "editableStructuresRequired": true,
+        "allowApprovedOriginalRaster": true
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "evidence-graph",
+      "graphId": "evidence-authoring",
+      "documentRef": "document-authoring",
+      "sourcePackageRefs": ["source-authoring"],
+      "evidence": [
+        {
+          "id": "ev-gradient",
+          "kind": "gradient",
+          "subjects": [{ "nodeRef": "gradient-card", "role": "primary" }],
+          "sourceRegions": [
+            {
+              "pageId": "page-authoring",
+              "box": { "x": 80, "y": 100, "width": 520, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+              "purpose": "measurement"
+            }
+          ],
+          "measurement": {
+            "kind": "gradient",
+            "gradientType": "linear",
+            "angleDeg": 28,
+            "stops": [
+              { "offset": 0, "color": { "space": "srgb", "components": [0.05, 0.45, 0.9], "alpha": 1 } },
+              { "offset": 0.55, "color": { "space": "srgb", "components": [0.1, 0.8, 0.65], "alpha": 0.92 } },
+              { "offset": 1, "color": { "space": "srgb", "components": [0.95, 0.78, 0.2], "alpha": 1 } }
+            ]
+          },
+          "tolerances": [{ "mode": "color-delta", "value": 2.5, "formula": "delta-e-2000" }],
+          "provenance": { "method": "image-analysis", "producer": { "name": "gradient-probe", "version": "2" }, "evidenceBlobRefs": [] },
+          "confidence": { "score": 0.96, "basis": "direct-pixel-measurement" }
+        },
+        {
+          "id": "ev-mask",
+          "kind": "mask",
+          "subjects": [{ "nodeRef": "gradient-card", "role": "primary" }],
+          "sourceRegions": [
+            {
+              "pageId": "page-authoring",
+              "box": { "x": 80, "y": 100, "width": 520, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+              "purpose": "mask"
+            }
+          ],
+          "measurement": {
+            "kind": "mask",
+            "mode": "alpha",
+            "bounds": { "x": 80, "y": 100, "width": 520, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+            "maskBlobDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          },
+          "tolerances": [{ "mode": "edge-distance", "value": { "value": 1, "unit": "px" } }],
+          "provenance": { "method": "image-analysis", "producer": { "name": "alpha-probe" }, "evidenceBlobRefs": [] },
+          "confidence": { "score": 0.98, "basis": "direct-pixel-measurement" }
+        },
+        {
+          "id": "ev-title-ink",
+          "kind": "text-ink",
+          "subjects": [{ "nodeRef": "title", "role": "primary" }],
+          "sourceRegions": [
+            {
+              "pageId": "page-authoring",
+              "box": { "x": 120, "y": 144, "width": 420, "height": 76, "unit": "px", "coordinateSpace": "source-canvas" },
+              "purpose": "protected-region"
+            }
+          ],
+          "measurement": {
+            "kind": "text-ink",
+            "inkBox": { "x": 126, "y": 151, "width": 318, "height": 46, "unit": "px", "coordinateSpace": "source-canvas" },
+            "lineBoxes": [
+              { "x": 120, "y": 144, "width": 330, "height": 54, "unit": "px", "coordinateSpace": "source-canvas" }
+            ],
+            "clusterBoxes": [
+              { "x": 126, "y": 151, "width": 38, "height": 42, "unit": "px", "coordinateSpace": "source-canvas" }
+            ]
+          },
+          "tolerances": [{ "mode": "edge-distance", "value": { "value": 1.5, "unit": "px" } }],
+          "provenance": { "method": "hybrid", "producer": { "name": "text-measure" }, "evidenceBlobRefs": [] },
+          "confidence": { "score": 0.93, "basis": "mixed" }
+        },
+        {
+          "id": "ev-image",
+          "kind": "image-region",
+          "subjects": [{ "nodeRef": "photo", "role": "primary" }],
+          "sourceRegions": [
+            {
+              "pageId": "page-authoring",
+              "box": { "x": 720, "y": 90, "width": 420, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+              "purpose": "crop"
+            }
+          ],
+          "measurement": {
+            "kind": "image-region",
+            "resourceDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "sourceCrop": { "x": 720, "y": 90, "width": 420, "height": 300, "unit": "px", "coordinateSpace": "source-canvas" },
+            "subjectBounds": { "x": 800, "y": 120, "width": 250, "height": 240, "unit": "px", "coordinateSpace": "source-canvas" },
+            "fitMode": "fill"
+          },
+          "tolerances": [{ "mode": "edge-distance", "value": { "value": 1, "unit": "px" } }],
+          "provenance": { "method": "image-analysis", "producer": { "name": "image-region-probe" }, "evidenceBlobRefs": [] },
+          "confidence": { "score": 0.99, "basis": "direct-pixel-measurement" }
+        },
+        {
+          "id": "ev-connector",
+          "kind": "geometry",
+          "subjects": [
+            { "nodeRef": "connector", "role": "primary" },
+            { "nodeRef": "gradient-card", "role": "source" },
+            { "nodeRef": "photo", "role": "target" }
+          ],
+          "sourceRegions": [
+            {
+              "pageId": "page-authoring",
+              "box": { "x": 600, "y": 240, "width": 120, "height": 20, "unit": "px", "coordinateSpace": "source-canvas" },
+              "purpose": "measurement"
+            }
+          ],
+          "measurement": {
+            "kind": "geometry",
+            "primitive": "line",
+            "box": { "x": 600, "y": 240, "width": 120, "height": 20, "unit": "px", "coordinateSpace": "source-canvas" },
+            "points": [
+              { "x": 600, "y": 250, "unit": "px", "coordinateSpace": "source-canvas" },
+              { "x": 720, "y": 250, "unit": "px", "coordinateSpace": "source-canvas" }
+            ],
+            "transform": [1, 0, 0, 1, 0, 0]
+          },
+          "tolerances": [{ "mode": "absolute", "value": { "value": 1, "unit": "px" } }],
+          "provenance": { "method": "manual-measurement", "producer": { "name": "codex" }, "evidenceBlobRefs": [] },
+          "confidence": { "score": 0.9, "basis": "author-judgment" }
+        },
+        {
+          "id": "ev-cell",
+          "kind": "geometry",
+          "subjects": [{ "nodeRef": "cell-a", "role": "primary" }],
+          "sourceRegions": [
+            {
+              "pageId": "page-authoring",
+              "box": { "x": 80, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+              "purpose": "measurement"
+            }
+          ],
+          "measurement": {
+            "kind": "geometry",
+            "primitive": "box",
+            "box": { "x": 80, "y": 500, "width": 310, "height": 90, "unit": "px", "coordinateSpace": "source-canvas" },
+            "points": [],
+            "transform": [1, 0, 0, 1, 0, 0]
+          },
+          "tolerances": [{ "mode": "absolute", "value": { "value": 1, "unit": "px" } }],
+          "provenance": { "method": "manual-measurement", "producer": { "name": "codex" }, "evidenceBlobRefs": [] },
+          "confidence": { "score": 0.95, "basis": "direct-pixel-measurement" }
+        },
+        {
+          "id": "ev-chart-primitive",
+          "kind": "geometry",
+          "subjects": [{ "nodeRef": "chart-bar-1", "role": "primary" }],
+          "sourceRegions": [
+            {
+              "pageId": "page-authoring",
+              "box": { "x": 900, "y": 620, "width": 90, "height": 120, "unit": "px", "coordinateSpace": "source-canvas" },
+              "purpose": "measurement"
+            }
+          ],
+          "measurement": {
+            "kind": "geometry",
+            "primitive": "box",
+            "box": { "x": 900, "y": 620, "width": 90, "height": 120, "unit": "px", "coordinateSpace": "source-canvas" },
+            "points": [],
+            "transform": [1, 0, 0, 1, 0, 0]
+          },
+          "tolerances": [{ "mode": "absolute", "value": { "value": 1, "unit": "px" } }],
+          "provenance": { "method": "image-analysis", "producer": { "name": "chart-primitive-probe" }, "evidenceBlobRefs": [] },
+          "confidence": { "score": 0.92, "basis": "structural-inference" }
+        }
+      ]
+    }
+  ]
+}

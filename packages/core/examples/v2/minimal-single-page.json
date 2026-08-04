@@ -1,0 +1,1814 @@
+{
+  "schemaVersion": 2,
+  "contracts": [
+    {
+      "schemaVersion": 2,
+      "contractKind": "source-package",
+      "sourceId": "source-1",
+      "rawBlob": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000001",
+        "mediaType": "image/png",
+        "byteLength": 1024,
+        "storageKey": "inputs/source.png",
+        "role": "raw-source",
+        "width": 160,
+        "height": 90
+      },
+      "canonicalPixels": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000002",
+        "mediaType": "application/octet-stream",
+        "byteLength": 57600,
+        "storageKey": "canonical/source.rgba",
+        "role": "canonical-pixels",
+        "width": 160,
+        "height": 90
+      },
+      "mediaType": "image/png",
+      "pages": [
+        {
+          "pageId": "page-1",
+          "canvas": {
+            "width": 160,
+            "height": 90,
+            "unit": "px"
+          },
+          "orientation": {
+            "original": null,
+            "applied": false
+          }
+        }
+      ],
+      "color": {
+        "workingSpace": "srgb"
+      },
+      "alpha": {
+        "present": false,
+        "nonOpaquePixelCount": 0
+      },
+      "derivedBlobs": []
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "reconstruction-spec",
+      "documentId": "document-1",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "assetRefs": [],
+      "pages": [
+        {
+          "pageId": "page-1",
+          "sourcePageRef": "page-1",
+          "rootNode": {
+            "id": "root",
+            "type": "group",
+            "geometry": {
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "source-canvas"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "bounds": {
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "content": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "ink": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "effect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                }
+              },
+              "clipStack": [],
+              "maskStack": []
+            },
+            "appearance": {
+              "opacity": 1,
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "blendMode": "normal",
+              "isolation": false
+            },
+            "content": {
+              "kind": "group",
+              "layoutMode": "absolute",
+              "semanticRole": "slide-root"
+            },
+            "editability": {
+              "required": false,
+              "requiredAspects": [],
+              "allowedFallbacks": [
+                "native"
+              ]
+            },
+            "evidenceRefs": [],
+            "children": [
+              {
+                "id": "title",
+                "type": "text",
+                "geometry": {
+                  "frame": {
+                    "x": 16,
+                    "y": 16,
+                    "width": 80,
+                    "height": 24,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "transform": {
+                    "kind": "affine-2d",
+                    "matrix": [
+                      1,
+                      0,
+                      0,
+                      1,
+                      0,
+                      0
+                    ]
+                  },
+                  "bounds": {
+                    "layout": {
+                      "x": 16,
+                      "y": 16,
+                      "width": 80,
+                      "height": 24,
+                      "unit": "px",
+                      "coordinateSpace": "source-canvas"
+                    },
+                    "content": {
+                      "x": 16,
+                      "y": 16,
+                      "width": 80,
+                      "height": 24,
+                      "unit": "px",
+                      "coordinateSpace": "source-canvas"
+                    },
+                    "ink": {
+                      "x": 18,
+                      "y": 18,
+                      "width": 48,
+                      "height": 16,
+                      "unit": "px",
+                      "coordinateSpace": "source-canvas"
+                    },
+                    "effect": {
+                      "x": 16,
+                      "y": 16,
+                      "width": 80,
+                      "height": 24,
+                      "unit": "px",
+                      "coordinateSpace": "source-canvas"
+                    }
+                  },
+                  "clipStack": [],
+                  "maskStack": []
+                },
+                "appearance": {
+                  "opacity": 1,
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [],
+                  "blendMode": "normal",
+                  "isolation": false
+                },
+                "content": {
+                  "kind": "text",
+                  "text": "Hello",
+                  "normalization": "NFC",
+                  "language": "en",
+                  "direction": "ltr",
+                  "writingMode": "horizontal-tb",
+                  "indexing": {
+                    "segmentation": "unicode-grapheme-cluster",
+                    "utf16Boundaries": [
+                      0,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5
+                    ]
+                  },
+                  "runs": [
+                    {
+                      "range": {
+                        "start": 0,
+                        "end": 5
+                      },
+                      "style": {
+                        "fontFamilies": [
+                          "Arial"
+                        ],
+                        "fontSize": {
+                          "value": 16,
+                          "unit": "px"
+                        },
+                        "fontWeight": 400,
+                        "fontStyle": "normal",
+                        "color": {
+                          "space": "srgb",
+                          "components": [
+                            0,
+                            0,
+                            0
+                          ],
+                          "alpha": 1
+                        },
+                        "tracking": {
+                          "value": 0,
+                          "unit": "px"
+                        },
+                        "baselineShift": {
+                          "value": 0,
+                          "unit": "px"
+                        },
+                        "features": [],
+                        "variationAxes": {}
+                      }
+                    }
+                  ],
+                  "paragraphs": [
+                    {
+                      "range": {
+                        "start": 0,
+                        "end": 5
+                      },
+                      "alignment": "left",
+                      "direction": "ltr",
+                      "indent": {
+                        "left": {
+                          "value": 0,
+                          "unit": "px"
+                        },
+                        "right": {
+                          "value": 0,
+                          "unit": "px"
+                        },
+                        "firstLine": {
+                          "value": 0,
+                          "unit": "px"
+                        }
+                      },
+                      "spacingBefore": {
+                        "value": 0,
+                        "unit": "px"
+                      },
+                      "spacingAfter": {
+                        "value": 0,
+                        "unit": "px"
+                      },
+                      "lineSpacing": {
+                        "mode": "exact",
+                        "value": 18
+                      }
+                    }
+                  ],
+                  "hardBreakRanges": [],
+                  "layout": {
+                    "mode": "native-flow",
+                    "wrapMode": "none",
+                    "overflow": "clip",
+                    "verticalAlign": "top",
+                    "padding": {
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0,
+                      "left": 0,
+                      "unit": "px"
+                    }
+                  },
+                  "measurements": {
+                    "inkBounds": {
+                      "x": 18,
+                      "y": 18,
+                      "width": 48,
+                      "height": 16,
+                      "unit": "px",
+                      "coordinateSpace": "source-canvas"
+                    },
+                    "visualLines": [
+                      {
+                        "range": {
+                          "start": 0,
+                          "end": 5
+                        },
+                        "box": {
+                          "x": 18,
+                          "y": 18,
+                          "width": 48,
+                          "height": 16,
+                          "unit": "px",
+                          "coordinateSpace": "source-canvas"
+                        },
+                        "baseline": {
+                          "value": 13,
+                          "unit": "px"
+                        },
+                        "ascent": {
+                          "value": 12,
+                          "unit": "px"
+                        },
+                        "descent": {
+                          "value": 4,
+                          "unit": "px"
+                        }
+                      }
+                    ],
+                    "positionedClusters": []
+                  }
+                },
+                "editability": {
+                  "required": true,
+                  "requiredAspects": [
+                    "content",
+                    "text-style",
+                    "geometry"
+                  ],
+                  "allowedFallbacks": [
+                    "native",
+                    "ooxml-postprocess",
+                    "lower-to-primitives"
+                  ]
+                },
+                "evidenceRefs": [
+                  "ev-title"
+                ],
+                "children": []
+              }
+            ]
+          }
+        }
+      ],
+      "targetIntent": {
+        "format": "pptx",
+        "editableTextRequired": true,
+        "simpleIconsEditableRequired": true
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "evidence-graph",
+      "graphId": "evidence-1",
+      "documentRef": "document-1",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "evidence": [
+        {
+          "id": "ev-title",
+          "kind": "text-content",
+          "subjects": [
+            {
+              "nodeRef": "title",
+              "role": "primary"
+            }
+          ],
+          "sourceRegions": [
+            {
+              "pageId": "page-1",
+              "box": {
+                "x": 18,
+                "y": 18,
+                "width": 48,
+                "height": 16,
+                "unit": "px",
+                "coordinateSpace": "source-canvas"
+              },
+              "purpose": "measurement"
+            }
+          ],
+          "measurement": {
+            "kind": "text-content",
+            "text": "Hello",
+            "normalization": "NFC",
+            "language": "en",
+            "caseSensitive": true
+          },
+          "tolerances": [
+            {
+              "mode": "exact"
+            }
+          ],
+          "provenance": {
+            "method": "manual-measurement",
+            "producer": {
+              "name": "codex"
+            },
+            "evidenceBlobRefs": []
+          },
+          "confidence": {
+            "score": 1,
+            "basis": "direct-pixel-measurement"
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "resolved-scene",
+      "sceneId": "scene-1",
+      "documentRef": "document-1",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "resources": [],
+      "pages": [
+        {
+          "pageId": "page-1",
+          "sourcePageRef": "page-1",
+          "canvas": {
+            "width": 160,
+            "height": 90,
+            "unit": "px"
+          },
+          "rootSceneNodeRef": "scene-node-root",
+          "drawOrder": [
+            "scene-node-root",
+            "scene-node-title"
+          ],
+          "nodes": [
+            {
+              "sceneNodeId": "scene-node-root",
+              "type": "group",
+              "sourceNodeRefs": [
+                "root"
+              ],
+              "localGeometry": {
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "transform": {
+                  "kind": "affine-2d",
+                  "matrix": [
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0
+                  ]
+                },
+                "bounds": {
+                  "layout": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "content": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "ink": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "effect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  }
+                },
+                "clipStack": [],
+                "maskStack": []
+              },
+              "worldTransform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "worldBounds": {
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "content": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "ink": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "effect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                }
+              },
+              "effectiveAppearance": {
+                "opacity": 1,
+                "fills": [],
+                "strokes": [],
+                "effects": [],
+                "blendMode": "normal",
+                "isolation": false
+              },
+              "resolvedContent": {
+                "kind": "group",
+                "layoutMode": "absolute",
+                "semanticRole": "slide-root"
+              },
+              "effectiveEditability": {
+                "required": false,
+                "requiredAspects": [],
+                "allowedFallbacks": [
+                  "native"
+                ]
+              },
+              "drawOrder": 0,
+              "childSceneNodeRefs": [
+                "scene-node-title"
+              ],
+              "resourceRefs": [],
+              "textStrategyCandidates": [],
+              "evidenceClosure": {
+                "directEvidenceRefs": [],
+                "subjectEvidenceRefs": [],
+                "allEvidenceRefs": [],
+                "subjectRoles": []
+              },
+              "consumedAuthorFields": [
+                "/pages/0/rootNode/appearance/blendMode",
+                "/pages/0/rootNode/appearance/effects",
+                "/pages/0/rootNode/appearance/fills",
+                "/pages/0/rootNode/appearance/isolation",
+                "/pages/0/rootNode/appearance/opacity",
+                "/pages/0/rootNode/appearance/strokes",
+                "/pages/0/rootNode/content/kind",
+                "/pages/0/rootNode/content/layoutMode",
+                "/pages/0/rootNode/content/semanticRole",
+                "/pages/0/rootNode/editability/allowedFallbacks/0",
+                "/pages/0/rootNode/editability/required",
+                "/pages/0/rootNode/editability/requiredAspects",
+                "/pages/0/rootNode/evidenceRefs",
+                "/pages/0/rootNode/geometry/bounds/content/coordinateSpace",
+                "/pages/0/rootNode/geometry/bounds/content/height",
+                "/pages/0/rootNode/geometry/bounds/content/unit",
+                "/pages/0/rootNode/geometry/bounds/content/width",
+                "/pages/0/rootNode/geometry/bounds/content/x",
+                "/pages/0/rootNode/geometry/bounds/content/y",
+                "/pages/0/rootNode/geometry/bounds/effect/coordinateSpace",
+                "/pages/0/rootNode/geometry/bounds/effect/height",
+                "/pages/0/rootNode/geometry/bounds/effect/unit",
+                "/pages/0/rootNode/geometry/bounds/effect/width",
+                "/pages/0/rootNode/geometry/bounds/effect/x",
+                "/pages/0/rootNode/geometry/bounds/effect/y",
+                "/pages/0/rootNode/geometry/bounds/ink/coordinateSpace",
+                "/pages/0/rootNode/geometry/bounds/ink/height",
+                "/pages/0/rootNode/geometry/bounds/ink/unit",
+                "/pages/0/rootNode/geometry/bounds/ink/width",
+                "/pages/0/rootNode/geometry/bounds/ink/x",
+                "/pages/0/rootNode/geometry/bounds/ink/y",
+                "/pages/0/rootNode/geometry/bounds/layout/coordinateSpace",
+                "/pages/0/rootNode/geometry/bounds/layout/height",
+                "/pages/0/rootNode/geometry/bounds/layout/unit",
+                "/pages/0/rootNode/geometry/bounds/layout/width",
+                "/pages/0/rootNode/geometry/bounds/layout/x",
+                "/pages/0/rootNode/geometry/bounds/layout/y",
+                "/pages/0/rootNode/geometry/clipStack",
+                "/pages/0/rootNode/geometry/frame/coordinateSpace",
+                "/pages/0/rootNode/geometry/frame/height",
+                "/pages/0/rootNode/geometry/frame/unit",
+                "/pages/0/rootNode/geometry/frame/width",
+                "/pages/0/rootNode/geometry/frame/x",
+                "/pages/0/rootNode/geometry/frame/y",
+                "/pages/0/rootNode/geometry/maskStack",
+                "/pages/0/rootNode/geometry/transform/kind",
+                "/pages/0/rootNode/geometry/transform/matrix/0",
+                "/pages/0/rootNode/geometry/transform/matrix/1",
+                "/pages/0/rootNode/geometry/transform/matrix/2",
+                "/pages/0/rootNode/geometry/transform/matrix/3",
+                "/pages/0/rootNode/geometry/transform/matrix/4",
+                "/pages/0/rootNode/geometry/transform/matrix/5",
+                "/pages/0/rootNode/id",
+                "/pages/0/rootNode/type"
+              ]
+            },
+            {
+              "sceneNodeId": "scene-node-title",
+              "type": "text",
+              "sourceNodeRefs": [
+                "title"
+              ],
+              "parentSceneNodeRef": "scene-node-root",
+              "localGeometry": {
+                "frame": {
+                  "x": 16,
+                  "y": 16,
+                  "width": 80,
+                  "height": 24,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "transform": {
+                  "kind": "affine-2d",
+                  "matrix": [
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0
+                  ]
+                },
+                "bounds": {
+                  "layout": {
+                    "x": 16,
+                    "y": 16,
+                    "width": 80,
+                    "height": 24,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "content": {
+                    "x": 16,
+                    "y": 16,
+                    "width": 80,
+                    "height": 24,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "ink": {
+                    "x": 18,
+                    "y": 18,
+                    "width": 48,
+                    "height": 16,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "effect": {
+                    "x": 16,
+                    "y": 16,
+                    "width": 80,
+                    "height": 24,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  }
+                },
+                "clipStack": [],
+                "maskStack": []
+              },
+              "worldTransform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "worldBounds": {
+                "layout": {
+                  "x": 16,
+                  "y": 16,
+                  "width": 80,
+                  "height": 24,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "content": {
+                  "x": 16,
+                  "y": 16,
+                  "width": 80,
+                  "height": 24,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "ink": {
+                  "x": 18,
+                  "y": 18,
+                  "width": 48,
+                  "height": 16,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "effect": {
+                  "x": 16,
+                  "y": 16,
+                  "width": 80,
+                  "height": 24,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                }
+              },
+              "effectiveAppearance": {
+                "opacity": 1,
+                "fills": [],
+                "strokes": [],
+                "effects": [],
+                "blendMode": "normal",
+                "isolation": false
+              },
+              "resolvedContent": {
+                "kind": "text",
+                "text": "Hello",
+                "normalization": "NFC",
+                "language": "en",
+                "direction": "ltr",
+                "writingMode": "horizontal-tb",
+                "indexing": {
+                  "segmentation": "unicode-grapheme-cluster",
+                  "utf16Boundaries": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ]
+                },
+                "runs": [
+                  {
+                    "range": {
+                      "start": 0,
+                      "end": 5
+                    },
+                    "style": {
+                      "fontFamilies": [
+                        "Arial"
+                      ],
+                      "fontSize": {
+                        "value": 16,
+                        "unit": "px"
+                      },
+                      "fontWeight": 400,
+                      "fontStyle": "normal",
+                      "color": {
+                        "space": "srgb",
+                        "components": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "alpha": 1
+                      },
+                      "tracking": {
+                        "value": 0,
+                        "unit": "px"
+                      },
+                      "baselineShift": {
+                        "value": 0,
+                        "unit": "px"
+                      },
+                      "features": [],
+                      "variationAxes": {}
+                    }
+                  }
+                ],
+                "paragraphs": [
+                  {
+                    "range": {
+                      "start": 0,
+                      "end": 5
+                    },
+                    "alignment": "left",
+                    "direction": "ltr",
+                    "indent": {
+                      "left": {
+                        "value": 0,
+                        "unit": "px"
+                      },
+                      "right": {
+                        "value": 0,
+                        "unit": "px"
+                      },
+                      "firstLine": {
+                        "value": 0,
+                        "unit": "px"
+                      }
+                    },
+                    "spacingBefore": {
+                      "value": 0,
+                      "unit": "px"
+                    },
+                    "spacingAfter": {
+                      "value": 0,
+                      "unit": "px"
+                    },
+                    "lineSpacing": {
+                      "mode": "exact",
+                      "value": 18
+                    }
+                  }
+                ],
+                "hardBreakRanges": [],
+                "layout": {
+                  "mode": "native-flow",
+                  "wrapMode": "none",
+                  "overflow": "clip",
+                  "verticalAlign": "top",
+                  "padding": {
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0,
+                    "left": 0,
+                    "unit": "px"
+                  }
+                },
+                "measurements": {
+                  "inkBounds": {
+                    "x": 18,
+                    "y": 18,
+                    "width": 48,
+                    "height": 16,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "visualLines": [
+                    {
+                      "range": {
+                        "start": 0,
+                        "end": 5
+                      },
+                      "box": {
+                        "x": 18,
+                        "y": 18,
+                        "width": 48,
+                        "height": 16,
+                        "unit": "px",
+                        "coordinateSpace": "source-canvas"
+                      },
+                      "baseline": {
+                        "value": 13,
+                        "unit": "px"
+                      },
+                      "ascent": {
+                        "value": 12,
+                        "unit": "px"
+                      },
+                      "descent": {
+                        "value": 4,
+                        "unit": "px"
+                      }
+                    }
+                  ],
+                  "positionedClusters": []
+                }
+              },
+              "effectiveEditability": {
+                "required": true,
+                "requiredAspects": [
+                  "content",
+                  "geometry",
+                  "text-style"
+                ],
+                "allowedFallbacks": [
+                  "native",
+                  "ooxml-postprocess",
+                  "lower-to-primitives"
+                ]
+              },
+              "drawOrder": 1,
+              "childSceneNodeRefs": [],
+              "resourceRefs": [],
+              "textStrategyCandidates": [
+                "native-flow",
+                "editable-runs"
+              ],
+              "evidenceClosure": {
+                "directEvidenceRefs": [
+                  "ev-title"
+                ],
+                "subjectEvidenceRefs": [
+                  "ev-title"
+                ],
+                "allEvidenceRefs": [
+                  "ev-title"
+                ],
+                "subjectRoles": [
+                  {
+                    "evidenceRef": "ev-title",
+                    "role": "primary"
+                  }
+                ]
+              },
+              "consumedAuthorFields": [
+                "/pages/0/rootNode/children/0/appearance/blendMode",
+                "/pages/0/rootNode/children/0/appearance/effects",
+                "/pages/0/rootNode/children/0/appearance/fills",
+                "/pages/0/rootNode/children/0/appearance/isolation",
+                "/pages/0/rootNode/children/0/appearance/opacity",
+                "/pages/0/rootNode/children/0/appearance/strokes",
+                "/pages/0/rootNode/children/0/content/direction",
+                "/pages/0/rootNode/children/0/content/hardBreakRanges",
+                "/pages/0/rootNode/children/0/content/indexing/segmentation",
+                "/pages/0/rootNode/children/0/content/indexing/utf16Boundaries/0",
+                "/pages/0/rootNode/children/0/content/indexing/utf16Boundaries/1",
+                "/pages/0/rootNode/children/0/content/indexing/utf16Boundaries/2",
+                "/pages/0/rootNode/children/0/content/indexing/utf16Boundaries/3",
+                "/pages/0/rootNode/children/0/content/indexing/utf16Boundaries/4",
+                "/pages/0/rootNode/children/0/content/indexing/utf16Boundaries/5",
+                "/pages/0/rootNode/children/0/content/kind",
+                "/pages/0/rootNode/children/0/content/language",
+                "/pages/0/rootNode/children/0/content/layout/mode",
+                "/pages/0/rootNode/children/0/content/layout/overflow",
+                "/pages/0/rootNode/children/0/content/layout/padding/bottom",
+                "/pages/0/rootNode/children/0/content/layout/padding/left",
+                "/pages/0/rootNode/children/0/content/layout/padding/right",
+                "/pages/0/rootNode/children/0/content/layout/padding/top",
+                "/pages/0/rootNode/children/0/content/layout/padding/unit",
+                "/pages/0/rootNode/children/0/content/layout/verticalAlign",
+                "/pages/0/rootNode/children/0/content/layout/wrapMode",
+                "/pages/0/rootNode/children/0/content/measurements/inkBounds/coordinateSpace",
+                "/pages/0/rootNode/children/0/content/measurements/inkBounds/height",
+                "/pages/0/rootNode/children/0/content/measurements/inkBounds/unit",
+                "/pages/0/rootNode/children/0/content/measurements/inkBounds/width",
+                "/pages/0/rootNode/children/0/content/measurements/inkBounds/x",
+                "/pages/0/rootNode/children/0/content/measurements/inkBounds/y",
+                "/pages/0/rootNode/children/0/content/measurements/positionedClusters",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/ascent/unit",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/ascent/value",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/baseline/unit",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/baseline/value",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/box/coordinateSpace",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/box/height",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/box/unit",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/box/width",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/box/x",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/box/y",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/descent/unit",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/descent/value",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/range/end",
+                "/pages/0/rootNode/children/0/content/measurements/visualLines/0/range/start",
+                "/pages/0/rootNode/children/0/content/normalization",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/alignment",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/direction",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/indent/firstLine/unit",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/indent/firstLine/value",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/indent/left/unit",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/indent/left/value",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/indent/right/unit",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/indent/right/value",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/lineSpacing/mode",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/lineSpacing/value",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/range/end",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/range/start",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/spacingAfter/unit",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/spacingAfter/value",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/spacingBefore/unit",
+                "/pages/0/rootNode/children/0/content/paragraphs/0/spacingBefore/value",
+                "/pages/0/rootNode/children/0/content/runs/0/range/end",
+                "/pages/0/rootNode/children/0/content/runs/0/range/start",
+                "/pages/0/rootNode/children/0/content/runs/0/style/baselineShift/unit",
+                "/pages/0/rootNode/children/0/content/runs/0/style/baselineShift/value",
+                "/pages/0/rootNode/children/0/content/runs/0/style/color/alpha",
+                "/pages/0/rootNode/children/0/content/runs/0/style/color/components/0",
+                "/pages/0/rootNode/children/0/content/runs/0/style/color/components/1",
+                "/pages/0/rootNode/children/0/content/runs/0/style/color/components/2",
+                "/pages/0/rootNode/children/0/content/runs/0/style/color/space",
+                "/pages/0/rootNode/children/0/content/runs/0/style/features",
+                "/pages/0/rootNode/children/0/content/runs/0/style/fontFamilies/0",
+                "/pages/0/rootNode/children/0/content/runs/0/style/fontSize/unit",
+                "/pages/0/rootNode/children/0/content/runs/0/style/fontSize/value",
+                "/pages/0/rootNode/children/0/content/runs/0/style/fontStyle",
+                "/pages/0/rootNode/children/0/content/runs/0/style/fontWeight",
+                "/pages/0/rootNode/children/0/content/runs/0/style/tracking/unit",
+                "/pages/0/rootNode/children/0/content/runs/0/style/tracking/value",
+                "/pages/0/rootNode/children/0/content/runs/0/style/variationAxes",
+                "/pages/0/rootNode/children/0/content/text",
+                "/pages/0/rootNode/children/0/content/writingMode",
+                "/pages/0/rootNode/children/0/editability/allowedFallbacks/0",
+                "/pages/0/rootNode/children/0/editability/allowedFallbacks/1",
+                "/pages/0/rootNode/children/0/editability/allowedFallbacks/2",
+                "/pages/0/rootNode/children/0/editability/required",
+                "/pages/0/rootNode/children/0/editability/requiredAspects/0",
+                "/pages/0/rootNode/children/0/editability/requiredAspects/1",
+                "/pages/0/rootNode/children/0/editability/requiredAspects/2",
+                "/pages/0/rootNode/children/0/evidenceRefs/0",
+                "/pages/0/rootNode/children/0/geometry/bounds/content/coordinateSpace",
+                "/pages/0/rootNode/children/0/geometry/bounds/content/height",
+                "/pages/0/rootNode/children/0/geometry/bounds/content/unit",
+                "/pages/0/rootNode/children/0/geometry/bounds/content/width",
+                "/pages/0/rootNode/children/0/geometry/bounds/content/x",
+                "/pages/0/rootNode/children/0/geometry/bounds/content/y",
+                "/pages/0/rootNode/children/0/geometry/bounds/effect/coordinateSpace",
+                "/pages/0/rootNode/children/0/geometry/bounds/effect/height",
+                "/pages/0/rootNode/children/0/geometry/bounds/effect/unit",
+                "/pages/0/rootNode/children/0/geometry/bounds/effect/width",
+                "/pages/0/rootNode/children/0/geometry/bounds/effect/x",
+                "/pages/0/rootNode/children/0/geometry/bounds/effect/y",
+                "/pages/0/rootNode/children/0/geometry/bounds/ink/coordinateSpace",
+                "/pages/0/rootNode/children/0/geometry/bounds/ink/height",
+                "/pages/0/rootNode/children/0/geometry/bounds/ink/unit",
+                "/pages/0/rootNode/children/0/geometry/bounds/ink/width",
+                "/pages/0/rootNode/children/0/geometry/bounds/ink/x",
+                "/pages/0/rootNode/children/0/geometry/bounds/ink/y",
+                "/pages/0/rootNode/children/0/geometry/bounds/layout/coordinateSpace",
+                "/pages/0/rootNode/children/0/geometry/bounds/layout/height",
+                "/pages/0/rootNode/children/0/geometry/bounds/layout/unit",
+                "/pages/0/rootNode/children/0/geometry/bounds/layout/width",
+                "/pages/0/rootNode/children/0/geometry/bounds/layout/x",
+                "/pages/0/rootNode/children/0/geometry/bounds/layout/y",
+                "/pages/0/rootNode/children/0/geometry/clipStack",
+                "/pages/0/rootNode/children/0/geometry/frame/coordinateSpace",
+                "/pages/0/rootNode/children/0/geometry/frame/height",
+                "/pages/0/rootNode/children/0/geometry/frame/unit",
+                "/pages/0/rootNode/children/0/geometry/frame/width",
+                "/pages/0/rootNode/children/0/geometry/frame/x",
+                "/pages/0/rootNode/children/0/geometry/frame/y",
+                "/pages/0/rootNode/children/0/geometry/maskStack",
+                "/pages/0/rootNode/children/0/geometry/transform/kind",
+                "/pages/0/rootNode/children/0/geometry/transform/matrix/0",
+                "/pages/0/rootNode/children/0/geometry/transform/matrix/1",
+                "/pages/0/rootNode/children/0/geometry/transform/matrix/2",
+                "/pages/0/rootNode/children/0/geometry/transform/matrix/3",
+                "/pages/0/rootNode/children/0/geometry/transform/matrix/4",
+                "/pages/0/rootNode/children/0/geometry/transform/matrix/5",
+                "/pages/0/rootNode/children/0/id",
+                "/pages/0/rootNode/children/0/type"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "backend-plan",
+      "planId": "plan-1",
+      "sceneRef": "scene-1",
+      "targetProfile": {
+        "profileId": "pptx-v2-default",
+        "backend": "pptx",
+        "backendVersion": "v2",
+        "nativeCapabilities": [
+          "group",
+          "shape",
+          "text",
+          "path",
+          "image",
+          "connector",
+          "solid-fill",
+          "linear-gradient",
+          "affine-transform",
+          "native-flow-text",
+          "connector-anchor"
+        ],
+        "ooxmlPostprocessCapabilities": [
+          "rich-text-run-metrics",
+          "positioned-cluster-text",
+          "outer-shadow",
+          "glow",
+          "reflection"
+        ],
+        "primitiveLoweringCapabilities": [
+          "icon",
+          "table",
+          "list",
+          "chart",
+          "custom-semantic",
+          "per-side-border",
+          "radial-gradient",
+          "connector-custom-path",
+          "alpha-mask"
+        ],
+        "approvedRasterCapabilities": [
+          "approved-original-raster"
+        ],
+        "unsupportedCapabilities": [
+          "perspective-transform",
+          "affine-shear",
+          "conic-gradient",
+          "luminance-mask",
+          "inner-shadow",
+          "blur",
+          "soft-edge",
+          "native-table",
+          "native-chart"
+        ],
+        "limits": {
+          "maxSlides": 500,
+          "maxObjectsPerSlide": 10000,
+          "maxPathCommandsPerObject": 5000,
+          "maxTotalPathCommands": 100000,
+          "maxOutputBytes": 1073741824
+        }
+      },
+      "pages": [
+        {
+          "pageId": "page-1",
+          "canvas": {
+            "width": 160,
+            "height": 90,
+            "unit": "px"
+          }
+        }
+      ],
+      "resources": [],
+      "operations": [
+        {
+          "operationId": "operation-scene-node-root",
+          "sceneNodeRef": "scene-node-root",
+          "pageId": "page-1",
+          "childSceneNodeRefs": [
+            "scene-node-title"
+          ],
+          "strategy": "native",
+          "requiredCapabilities": [
+            "affine-transform",
+            "group"
+          ],
+          "parameters": {
+            "nodeType": "group",
+            "localGeometry": {
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "source-canvas"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "bounds": {
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "content": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "ink": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "effect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                }
+              },
+              "clipStack": [],
+              "maskStack": []
+            },
+            "worldTransform": {
+              "kind": "affine-2d",
+              "matrix": [
+                1,
+                0,
+                0,
+                1,
+                0,
+                0
+              ]
+            },
+            "worldBounds": {
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "content": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "ink": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "effect": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              }
+            },
+            "appearance": {
+              "opacity": 1,
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "blendMode": "normal",
+              "isolation": false
+            },
+            "content": {
+              "kind": "group",
+              "layoutMode": "absolute",
+              "semanticRole": "slide-root"
+            },
+            "drawOrder": 0,
+            "evidenceRefs": []
+          },
+          "resourceRefs": [],
+          "expectedObjects": [
+            {
+              "objectRef": "object-scene-node-root-primary",
+              "nativeKind": "group",
+              "role": "primary",
+              "virtual": true,
+              "slideId": "page-1",
+              "bbox": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "editableAspects": [],
+              "expectedOoxmlFeatures": []
+            }
+          ],
+          "editabilityContract": {
+            "required": false,
+            "requiredAspects": [],
+            "verificationActions": []
+          },
+          "declaredLosses": []
+        },
+        {
+          "operationId": "operation-scene-node-title",
+          "sceneNodeRef": "scene-node-title",
+          "pageId": "page-1",
+          "parentSceneNodeRef": "scene-node-root",
+          "childSceneNodeRefs": [],
+          "strategy": "native",
+          "requiredCapabilities": [
+            "affine-transform",
+            "native-flow-text",
+            "text"
+          ],
+          "parameters": {
+            "nodeType": "text",
+            "localGeometry": {
+              "frame": {
+                "x": 16,
+                "y": 16,
+                "width": 80,
+                "height": 24,
+                "unit": "px",
+                "coordinateSpace": "source-canvas"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "bounds": {
+                "layout": {
+                  "x": 16,
+                  "y": 16,
+                  "width": 80,
+                  "height": 24,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "content": {
+                  "x": 16,
+                  "y": 16,
+                  "width": 80,
+                  "height": 24,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "ink": {
+                  "x": 18,
+                  "y": 18,
+                  "width": 48,
+                  "height": 16,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "effect": {
+                  "x": 16,
+                  "y": 16,
+                  "width": 80,
+                  "height": 24,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                }
+              },
+              "clipStack": [],
+              "maskStack": []
+            },
+            "worldTransform": {
+              "kind": "affine-2d",
+              "matrix": [
+                1,
+                0,
+                0,
+                1,
+                0,
+                0
+              ]
+            },
+            "worldBounds": {
+              "layout": {
+                "x": 16,
+                "y": 16,
+                "width": 80,
+                "height": 24,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "content": {
+                "x": 16,
+                "y": 16,
+                "width": 80,
+                "height": 24,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "ink": {
+                "x": 18,
+                "y": 18,
+                "width": 48,
+                "height": 16,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "effect": {
+                "x": 16,
+                "y": 16,
+                "width": 80,
+                "height": 24,
+                "unit": "px",
+                "coordinateSpace": "page"
+              }
+            },
+            "appearance": {
+              "opacity": 1,
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "blendMode": "normal",
+              "isolation": false
+            },
+            "content": {
+              "kind": "text",
+              "text": "Hello",
+              "normalization": "NFC",
+              "language": "en",
+              "direction": "ltr",
+              "writingMode": "horizontal-tb",
+              "indexing": {
+                "segmentation": "unicode-grapheme-cluster",
+                "utf16Boundaries": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ]
+              },
+              "runs": [
+                {
+                  "range": {
+                    "start": 0,
+                    "end": 5
+                  },
+                  "style": {
+                    "fontFamilies": [
+                      "Arial"
+                    ],
+                    "fontSize": {
+                      "value": 16,
+                      "unit": "px"
+                    },
+                    "fontWeight": 400,
+                    "fontStyle": "normal",
+                    "color": {
+                      "space": "srgb",
+                      "components": [
+                        0,
+                        0,
+                        0
+                      ],
+                      "alpha": 1
+                    },
+                    "tracking": {
+                      "value": 0,
+                      "unit": "px"
+                    },
+                    "baselineShift": {
+                      "value": 0,
+                      "unit": "px"
+                    },
+                    "features": [],
+                    "variationAxes": {}
+                  }
+                }
+              ],
+              "paragraphs": [
+                {
+                  "range": {
+                    "start": 0,
+                    "end": 5
+                  },
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "indent": {
+                    "left": {
+                      "value": 0,
+                      "unit": "px"
+                    },
+                    "right": {
+                      "value": 0,
+                      "unit": "px"
+                    },
+                    "firstLine": {
+                      "value": 0,
+                      "unit": "px"
+                    }
+                  },
+                  "spacingBefore": {
+                    "value": 0,
+                    "unit": "px"
+                  },
+                  "spacingAfter": {
+                    "value": 0,
+                    "unit": "px"
+                  },
+                  "lineSpacing": {
+                    "mode": "exact",
+                    "value": 18
+                  }
+                }
+              ],
+              "hardBreakRanges": [],
+              "layout": {
+                "mode": "native-flow",
+                "wrapMode": "none",
+                "overflow": "clip",
+                "verticalAlign": "top",
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0,
+                  "unit": "px"
+                }
+              },
+              "measurements": {
+                "inkBounds": {
+                  "x": 18,
+                  "y": 18,
+                  "width": 48,
+                  "height": 16,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "visualLines": [
+                  {
+                    "range": {
+                      "start": 0,
+                      "end": 5
+                    },
+                    "box": {
+                      "x": 18,
+                      "y": 18,
+                      "width": 48,
+                      "height": 16,
+                      "unit": "px",
+                      "coordinateSpace": "source-canvas"
+                    },
+                    "baseline": {
+                      "value": 13,
+                      "unit": "px"
+                    },
+                    "ascent": {
+                      "value": 12,
+                      "unit": "px"
+                    },
+                    "descent": {
+                      "value": 4,
+                      "unit": "px"
+                    }
+                  }
+                ],
+                "positionedClusters": []
+              }
+            },
+            "drawOrder": 1,
+            "evidenceRefs": [
+              "ev-title"
+            ]
+          },
+          "resourceRefs": [],
+          "expectedObjects": [
+            {
+              "objectRef": "object-scene-node-title-primary",
+              "nativeKind": "text",
+              "role": "primary",
+              "virtual": false,
+              "slideId": "page-1",
+              "bbox": {
+                "x": 16,
+                "y": 16,
+                "width": 80,
+                "height": 24,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "editableAspects": [
+                "content",
+                "geometry",
+                "text-style"
+              ],
+              "expectedOoxmlFeatures": [
+                "native-text",
+                "rich-text-runs"
+              ]
+            }
+          ],
+          "editabilityContract": {
+            "required": true,
+            "requiredAspects": [
+              "content",
+              "geometry",
+              "text-style"
+            ],
+            "verificationActions": [
+              "modify-content",
+              "modify-geometry",
+              "modify-text-style",
+              "save-reopen-inspect"
+            ]
+          },
+          "declaredLosses": []
+        }
+      ],
+      "summary": {
+        "nodeCount": 2,
+        "objectCount": 2,
+        "strategies": {
+          "native": 2,
+          "ooxmlPostprocess": 0,
+          "lowerToPrimitives": 0,
+          "approvedOriginalRaster": 0,
+          "rejected": 0
+        },
+        "hasRejected": false,
+        "hasUnapprovedLoss": false
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "verification-result",
+      "verificationId": "verification-1",
+      "planRef": "plan-1",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "status": "passed",
+      "pageResults": [
+        {
+          "subjectRef": "page-1",
+          "gate": "visual",
+          "status": "passed"
+        }
+      ],
+      "evidenceResults": [
+        {
+          "subjectRef": "ev-title",
+          "gate": "evidence",
+          "status": "passed"
+        }
+      ],
+      "sceneNodeResults": [
+        {
+          "subjectRef": "scene-node-root",
+          "gate": "scene",
+          "status": "passed"
+        },
+        {
+          "subjectRef": "scene-node-title",
+          "gate": "scene",
+          "status": "passed"
+        }
+      ],
+      "objectResults": [
+        {
+          "subjectRef": "object-scene-node-root-primary",
+          "gate": "object",
+          "status": "passed"
+        },
+        {
+          "subjectRef": "object-scene-node-title-primary",
+          "gate": "object",
+          "status": "passed"
+        }
+      ],
+      "packageSecurity": {
+        "subjectRef": "pptx-package",
+        "gate": "package-security",
+        "status": "passed"
+      },
+      "failures": [],
+      "sourceResults": [
+        {
+          "subjectRef": "source-1",
+          "gate": "source",
+          "status": "passed"
+        }
+      ],
+      "operationResults": [
+        {
+          "subjectRef": "operation-scene-node-root",
+          "gate": "operation",
+          "status": "passed"
+        },
+        {
+          "subjectRef": "operation-scene-node-title",
+          "gate": "operation",
+          "status": "passed"
+        }
+      ],
+      "protectedRegionResults": [
+        {
+          "subjectRef": "protected-ev-title",
+          "gate": "protected-region",
+          "status": "passed"
+        }
+      ],
+      "editabilityResults": [
+        {
+          "subjectRef": "object-scene-node-root-primary",
+          "gate": "editability",
+          "status": "passed"
+        },
+        {
+          "subjectRef": "object-scene-node-title-primary",
+          "gate": "editability",
+          "status": "passed"
+        }
+      ],
+      "summary": {
+        "totalChecks": 13,
+        "passedChecks": 13,
+        "failedChecks": 0,
+        "skippedChecks": 0,
+        "gateStatus": "passed"
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "delivery-manifest",
+      "manifestId": "delivery-1",
+      "runId": "run-1",
+      "status": "published",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "verificationResultRef": "verification-1",
+      "outputs": [
+        {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000003",
+          "mediaType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "byteLength": 2048,
+          "storageKey": "runs/run-1/output.pptx",
+          "role": "pptx-output"
+        }
+      ],
+      "publishedAt": "2026-08-03T00:00:00Z"
+    }
+  ]
+}

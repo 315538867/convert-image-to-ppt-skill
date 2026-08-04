@@ -1,4 +1,4 @@
 interface:
   display_name: "图片转可编辑 PPT"
   short_description: "从截图严格还原可编辑 PPTX，并输出像素、对象与编辑性证据"
-  default_prompt: "使用 $convert-image-to-ppt 将给定图片转换为高还原度、可编辑的 PPTX；只使用六平面任务束，完成源覆盖、视觉差异、对象回读和编辑性验证后再交付。"
+  default_prompt: "使用 $convert-image-to-ppt 将给定图片转换为高还原度、可编辑的 PPTX；作者只编写 V2 Reconstruction Spec 与 Evidence Graph，运行时完成场景编译、后端规划、逐页验证和事务化发布后再交付。"

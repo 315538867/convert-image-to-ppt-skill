@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:img2ppt:schema:v2:verification-result",
+  "title": "Image-to-PPT V2 Verification Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractKind",
+    "verificationId",
+    "planRef",
+    "sourcePackageRefs",
+    "status",
+    "sourceResults",
+    "pageResults",
+    "evidenceResults",
+    "sceneNodeResults",
+    "operationResults",
+    "objectResults",
+    "protectedRegionResults",
+    "editabilityResults",
+    "packageSecurity",
+    "summary",
+    "failures"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "contractKind": { "const": "verification-result" },
+    "verificationId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "planRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "objectManifestRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "sourcePackageRefs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+    },
+    "status": { "enum": ["passed", "failed-quality-gate"] },
+    "sourceResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "pageResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "evidenceResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "sceneNodeResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "operationResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "objectResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "protectedRegionResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "editabilityResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "packageSecurity": { "$ref": "#/$defs/result" },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totalChecks", "passedChecks", "failedChecks", "skippedChecks", "gateStatus"],
+      "properties": {
+        "totalChecks": { "type": "integer", "minimum": 0 },
+        "passedChecks": { "type": "integer", "minimum": 0 },
+        "failedChecks": { "type": "integer", "minimum": 0 },
+        "skippedChecks": { "type": "integer", "minimum": 0 },
+        "gateStatus": { "enum": ["passed", "failed-quality-gate"] },
+        "weightedVisualScore": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "failures": { "type": "array", "items": { "$ref": "#/$defs/failure" } }
+  },
+  "$defs": {
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subjectRef", "status"],
+      "properties": {
+        "subjectRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "status": { "enum": ["passed", "failed", "skipped"] },
+        "gate": { "enum": ["source", "visual", "evidence", "scene", "operation", "object", "protected-region", "editability", "package-security"] },
+        "metrics": { "type": "object" },
+        "message": { "type": "string" },
+        "details": { "type": "object" }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "code", "message"],
+      "properties": {
+        "category": { "enum": ["source-normalization", "reconstruction", "evidence", "scene-compiler", "backend-planner", "renderer", "visual-verifier", "object-verifier", "editability", "package-security", "publisher"] },
+        "subjectRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "code": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "message": { "type": "string", "minLength": 1 },
+        "details": { "type": "object" }
+      }
+    }
+  }
+}

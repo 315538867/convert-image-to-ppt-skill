@@ -6,12 +6,11 @@
   "exports": {
     ".": "./src/index.mjs",
     "./canonical": "./src/canonical.mjs",
-    "./compile": "./src/compile-render-plane.mjs",
-    "./materialize": "./src/materialize-task-output.mjs",
-    "./prepare": "./src/prepare-authored-bundle.mjs",
-    "./resources": "./src/resources.mjs",
+    "./compile": "./src/compile-resolved-scene.mjs",
+    "./compile-v2": "./src/compile-resolved-scene.mjs",
     "./text-index": "./src/text-index.mjs",
-    "./validate": "./src/validate-task-bundle.mjs"
+    "./validate": "./src/validate-v2-contracts.mjs",
+    "./validate-v2": "./src/validate-v2-contracts.mjs"
   },
   "files": [
     "src/",

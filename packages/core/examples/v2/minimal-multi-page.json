@@ -1,0 +1,1240 @@
+{
+  "schemaVersion": 2,
+  "contracts": [
+    {
+      "schemaVersion": 2,
+      "contractKind": "source-package",
+      "sourceId": "source-1",
+      "rawBlob": {
+        "digest": "sha256:1000000000000000000000000000000000000000000000000000000000000001",
+        "mediaType": "image/png",
+        "byteLength": 2048,
+        "storageKey": "inputs/multi.png",
+        "role": "raw-source",
+        "width": 160,
+        "height": 180
+      },
+      "canonicalPixels": {
+        "digest": "sha256:1000000000000000000000000000000000000000000000000000000000000002",
+        "mediaType": "application/octet-stream",
+        "byteLength": 115200,
+        "storageKey": "canonical/multi.rgba",
+        "role": "canonical-pixels",
+        "width": 160,
+        "height": 180
+      },
+      "mediaType": "image/png",
+      "pages": [
+        {
+          "pageId": "page-1",
+          "canvas": {
+            "width": 160,
+            "height": 90,
+            "unit": "px"
+          },
+          "orientation": {
+            "original": null,
+            "applied": false
+          }
+        },
+        {
+          "pageId": "page-2",
+          "canvas": {
+            "width": 160,
+            "height": 90,
+            "unit": "px"
+          },
+          "orientation": {
+            "original": null,
+            "applied": false
+          }
+        }
+      ],
+      "color": {
+        "workingSpace": "srgb"
+      },
+      "alpha": {
+        "present": false,
+        "nonOpaquePixelCount": 0
+      },
+      "derivedBlobs": []
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "reconstruction-spec",
+      "documentId": "document-1",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "assetRefs": [],
+      "pages": [
+        {
+          "pageId": "page-1",
+          "sourcePageRef": "page-1",
+          "rootNode": {
+            "id": "root-page-1",
+            "type": "group",
+            "geometry": {
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "source-canvas"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "bounds": {
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "content": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "ink": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "effect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                }
+              },
+              "clipStack": [],
+              "maskStack": []
+            },
+            "appearance": {
+              "opacity": 1,
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "blendMode": "normal",
+              "isolation": false
+            },
+            "content": {
+              "kind": "group",
+              "layoutMode": "absolute",
+              "semanticRole": "slide-root"
+            },
+            "editability": {
+              "required": false,
+              "requiredAspects": [],
+              "allowedFallbacks": [
+                "native"
+              ]
+            },
+            "evidenceRefs": [],
+            "children": []
+          }
+        },
+        {
+          "pageId": "page-2",
+          "sourcePageRef": "page-2",
+          "rootNode": {
+            "id": "root-page-2",
+            "type": "group",
+            "geometry": {
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "source-canvas"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "bounds": {
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "content": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "ink": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "effect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                }
+              },
+              "clipStack": [],
+              "maskStack": []
+            },
+            "appearance": {
+              "opacity": 1,
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "blendMode": "normal",
+              "isolation": false
+            },
+            "content": {
+              "kind": "group",
+              "layoutMode": "absolute",
+              "semanticRole": "slide-root"
+            },
+            "editability": {
+              "required": false,
+              "requiredAspects": [],
+              "allowedFallbacks": [
+                "native"
+              ]
+            },
+            "evidenceRefs": [],
+            "children": []
+          }
+        }
+      ],
+      "targetIntent": {
+        "format": "pptx",
+        "editableTextRequired": true,
+        "simpleIconsEditableRequired": true
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "evidence-graph",
+      "graphId": "evidence-1",
+      "documentRef": "document-1",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "evidence": []
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "resolved-scene",
+      "sceneId": "scene-1",
+      "documentRef": "document-1",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "resources": [],
+      "pages": [
+        {
+          "pageId": "page-1",
+          "sourcePageRef": "page-1",
+          "canvas": {
+            "width": 160,
+            "height": 90,
+            "unit": "px"
+          },
+          "rootSceneNodeRef": "scene-node-root-page-1",
+          "drawOrder": [
+            "scene-node-root-page-1"
+          ],
+          "nodes": [
+            {
+              "sceneNodeId": "scene-node-root-page-1",
+              "type": "group",
+              "sourceNodeRefs": [
+                "root-page-1"
+              ],
+              "localGeometry": {
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "transform": {
+                  "kind": "affine-2d",
+                  "matrix": [
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0
+                  ]
+                },
+                "bounds": {
+                  "layout": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "content": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "ink": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "effect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  }
+                },
+                "clipStack": [],
+                "maskStack": []
+              },
+              "worldTransform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "worldBounds": {
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "content": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "ink": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "effect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                }
+              },
+              "effectiveAppearance": {
+                "opacity": 1,
+                "fills": [],
+                "strokes": [],
+                "effects": [],
+                "blendMode": "normal",
+                "isolation": false
+              },
+              "resolvedContent": {
+                "kind": "group",
+                "layoutMode": "absolute",
+                "semanticRole": "slide-root"
+              },
+              "effectiveEditability": {
+                "required": false,
+                "requiredAspects": [],
+                "allowedFallbacks": [
+                  "native"
+                ]
+              },
+              "drawOrder": 0,
+              "childSceneNodeRefs": [],
+              "resourceRefs": [],
+              "textStrategyCandidates": [],
+              "evidenceClosure": {
+                "directEvidenceRefs": [],
+                "subjectEvidenceRefs": [],
+                "allEvidenceRefs": [],
+                "subjectRoles": []
+              },
+              "consumedAuthorFields": [
+                "/pages/0/rootNode/appearance/blendMode",
+                "/pages/0/rootNode/appearance/effects",
+                "/pages/0/rootNode/appearance/fills",
+                "/pages/0/rootNode/appearance/isolation",
+                "/pages/0/rootNode/appearance/opacity",
+                "/pages/0/rootNode/appearance/strokes",
+                "/pages/0/rootNode/content/kind",
+                "/pages/0/rootNode/content/layoutMode",
+                "/pages/0/rootNode/content/semanticRole",
+                "/pages/0/rootNode/editability/allowedFallbacks/0",
+                "/pages/0/rootNode/editability/required",
+                "/pages/0/rootNode/editability/requiredAspects",
+                "/pages/0/rootNode/evidenceRefs",
+                "/pages/0/rootNode/geometry/bounds/content/coordinateSpace",
+                "/pages/0/rootNode/geometry/bounds/content/height",
+                "/pages/0/rootNode/geometry/bounds/content/unit",
+                "/pages/0/rootNode/geometry/bounds/content/width",
+                "/pages/0/rootNode/geometry/bounds/content/x",
+                "/pages/0/rootNode/geometry/bounds/content/y",
+                "/pages/0/rootNode/geometry/bounds/effect/coordinateSpace",
+                "/pages/0/rootNode/geometry/bounds/effect/height",
+                "/pages/0/rootNode/geometry/bounds/effect/unit",
+                "/pages/0/rootNode/geometry/bounds/effect/width",
+                "/pages/0/rootNode/geometry/bounds/effect/x",
+                "/pages/0/rootNode/geometry/bounds/effect/y",
+                "/pages/0/rootNode/geometry/bounds/ink/coordinateSpace",
+                "/pages/0/rootNode/geometry/bounds/ink/height",
+                "/pages/0/rootNode/geometry/bounds/ink/unit",
+                "/pages/0/rootNode/geometry/bounds/ink/width",
+                "/pages/0/rootNode/geometry/bounds/ink/x",
+                "/pages/0/rootNode/geometry/bounds/ink/y",
+                "/pages/0/rootNode/geometry/bounds/layout/coordinateSpace",
+                "/pages/0/rootNode/geometry/bounds/layout/height",
+                "/pages/0/rootNode/geometry/bounds/layout/unit",
+                "/pages/0/rootNode/geometry/bounds/layout/width",
+                "/pages/0/rootNode/geometry/bounds/layout/x",
+                "/pages/0/rootNode/geometry/bounds/layout/y",
+                "/pages/0/rootNode/geometry/clipStack",
+                "/pages/0/rootNode/geometry/frame/coordinateSpace",
+                "/pages/0/rootNode/geometry/frame/height",
+                "/pages/0/rootNode/geometry/frame/unit",
+                "/pages/0/rootNode/geometry/frame/width",
+                "/pages/0/rootNode/geometry/frame/x",
+                "/pages/0/rootNode/geometry/frame/y",
+                "/pages/0/rootNode/geometry/maskStack",
+                "/pages/0/rootNode/geometry/transform/kind",
+                "/pages/0/rootNode/geometry/transform/matrix/0",
+                "/pages/0/rootNode/geometry/transform/matrix/1",
+                "/pages/0/rootNode/geometry/transform/matrix/2",
+                "/pages/0/rootNode/geometry/transform/matrix/3",
+                "/pages/0/rootNode/geometry/transform/matrix/4",
+                "/pages/0/rootNode/geometry/transform/matrix/5",
+                "/pages/0/rootNode/id",
+                "/pages/0/rootNode/type"
+              ]
+            }
+          ]
+        },
+        {
+          "pageId": "page-2",
+          "sourcePageRef": "page-2",
+          "canvas": {
+            "width": 160,
+            "height": 90,
+            "unit": "px"
+          },
+          "rootSceneNodeRef": "scene-node-root-page-2",
+          "drawOrder": [
+            "scene-node-root-page-2"
+          ],
+          "nodes": [
+            {
+              "sceneNodeId": "scene-node-root-page-2",
+              "type": "group",
+              "sourceNodeRefs": [
+                "root-page-2"
+              ],
+              "localGeometry": {
+                "frame": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "transform": {
+                  "kind": "affine-2d",
+                  "matrix": [
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0
+                  ]
+                },
+                "bounds": {
+                  "layout": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "content": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "ink": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  },
+                  "effect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 160,
+                    "height": 90,
+                    "unit": "px",
+                    "coordinateSpace": "source-canvas"
+                  }
+                },
+                "clipStack": [],
+                "maskStack": []
+              },
+              "worldTransform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "worldBounds": {
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "content": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "ink": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                },
+                "effect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "page"
+                }
+              },
+              "effectiveAppearance": {
+                "opacity": 1,
+                "fills": [],
+                "strokes": [],
+                "effects": [],
+                "blendMode": "normal",
+                "isolation": false
+              },
+              "resolvedContent": {
+                "kind": "group",
+                "layoutMode": "absolute",
+                "semanticRole": "slide-root"
+              },
+              "effectiveEditability": {
+                "required": false,
+                "requiredAspects": [],
+                "allowedFallbacks": [
+                  "native"
+                ]
+              },
+              "drawOrder": 0,
+              "childSceneNodeRefs": [],
+              "resourceRefs": [],
+              "textStrategyCandidates": [],
+              "evidenceClosure": {
+                "directEvidenceRefs": [],
+                "subjectEvidenceRefs": [],
+                "allEvidenceRefs": [],
+                "subjectRoles": []
+              },
+              "consumedAuthorFields": [
+                "/pages/1/rootNode/appearance/blendMode",
+                "/pages/1/rootNode/appearance/effects",
+                "/pages/1/rootNode/appearance/fills",
+                "/pages/1/rootNode/appearance/isolation",
+                "/pages/1/rootNode/appearance/opacity",
+                "/pages/1/rootNode/appearance/strokes",
+                "/pages/1/rootNode/content/kind",
+                "/pages/1/rootNode/content/layoutMode",
+                "/pages/1/rootNode/content/semanticRole",
+                "/pages/1/rootNode/editability/allowedFallbacks/0",
+                "/pages/1/rootNode/editability/required",
+                "/pages/1/rootNode/editability/requiredAspects",
+                "/pages/1/rootNode/evidenceRefs",
+                "/pages/1/rootNode/geometry/bounds/content/coordinateSpace",
+                "/pages/1/rootNode/geometry/bounds/content/height",
+                "/pages/1/rootNode/geometry/bounds/content/unit",
+                "/pages/1/rootNode/geometry/bounds/content/width",
+                "/pages/1/rootNode/geometry/bounds/content/x",
+                "/pages/1/rootNode/geometry/bounds/content/y",
+                "/pages/1/rootNode/geometry/bounds/effect/coordinateSpace",
+                "/pages/1/rootNode/geometry/bounds/effect/height",
+                "/pages/1/rootNode/geometry/bounds/effect/unit",
+                "/pages/1/rootNode/geometry/bounds/effect/width",
+                "/pages/1/rootNode/geometry/bounds/effect/x",
+                "/pages/1/rootNode/geometry/bounds/effect/y",
+                "/pages/1/rootNode/geometry/bounds/ink/coordinateSpace",
+                "/pages/1/rootNode/geometry/bounds/ink/height",
+                "/pages/1/rootNode/geometry/bounds/ink/unit",
+                "/pages/1/rootNode/geometry/bounds/ink/width",
+                "/pages/1/rootNode/geometry/bounds/ink/x",
+                "/pages/1/rootNode/geometry/bounds/ink/y",
+                "/pages/1/rootNode/geometry/bounds/layout/coordinateSpace",
+                "/pages/1/rootNode/geometry/bounds/layout/height",
+                "/pages/1/rootNode/geometry/bounds/layout/unit",
+                "/pages/1/rootNode/geometry/bounds/layout/width",
+                "/pages/1/rootNode/geometry/bounds/layout/x",
+                "/pages/1/rootNode/geometry/bounds/layout/y",
+                "/pages/1/rootNode/geometry/clipStack",
+                "/pages/1/rootNode/geometry/frame/coordinateSpace",
+                "/pages/1/rootNode/geometry/frame/height",
+                "/pages/1/rootNode/geometry/frame/unit",
+                "/pages/1/rootNode/geometry/frame/width",
+                "/pages/1/rootNode/geometry/frame/x",
+                "/pages/1/rootNode/geometry/frame/y",
+                "/pages/1/rootNode/geometry/maskStack",
+                "/pages/1/rootNode/geometry/transform/kind",
+                "/pages/1/rootNode/geometry/transform/matrix/0",
+                "/pages/1/rootNode/geometry/transform/matrix/1",
+                "/pages/1/rootNode/geometry/transform/matrix/2",
+                "/pages/1/rootNode/geometry/transform/matrix/3",
+                "/pages/1/rootNode/geometry/transform/matrix/4",
+                "/pages/1/rootNode/geometry/transform/matrix/5",
+                "/pages/1/rootNode/id",
+                "/pages/1/rootNode/type"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "backend-plan",
+      "planId": "plan-1",
+      "sceneRef": "scene-1",
+      "targetProfile": {
+        "profileId": "pptx-v2-default",
+        "backend": "pptx",
+        "backendVersion": "v2",
+        "nativeCapabilities": [
+          "group",
+          "shape",
+          "text",
+          "path",
+          "image",
+          "connector",
+          "solid-fill",
+          "linear-gradient",
+          "affine-transform",
+          "native-flow-text",
+          "connector-anchor"
+        ],
+        "ooxmlPostprocessCapabilities": [
+          "rich-text-run-metrics",
+          "positioned-cluster-text",
+          "outer-shadow",
+          "glow",
+          "reflection"
+        ],
+        "primitiveLoweringCapabilities": [
+          "icon",
+          "table",
+          "list",
+          "chart",
+          "custom-semantic",
+          "per-side-border",
+          "radial-gradient",
+          "connector-custom-path",
+          "alpha-mask"
+        ],
+        "approvedRasterCapabilities": [
+          "approved-original-raster"
+        ],
+        "unsupportedCapabilities": [
+          "perspective-transform",
+          "affine-shear",
+          "conic-gradient",
+          "luminance-mask",
+          "inner-shadow",
+          "blur",
+          "soft-edge",
+          "native-table",
+          "native-chart"
+        ],
+        "limits": {
+          "maxSlides": 500,
+          "maxObjectsPerSlide": 10000,
+          "maxPathCommandsPerObject": 5000,
+          "maxTotalPathCommands": 100000,
+          "maxOutputBytes": 1073741824
+        }
+      },
+      "pages": [
+        {
+          "pageId": "page-1",
+          "canvas": {
+            "width": 160,
+            "height": 90,
+            "unit": "px"
+          }
+        },
+        {
+          "pageId": "page-2",
+          "canvas": {
+            "width": 160,
+            "height": 90,
+            "unit": "px"
+          }
+        }
+      ],
+      "resources": [],
+      "operations": [
+        {
+          "operationId": "operation-scene-node-root-page-1",
+          "sceneNodeRef": "scene-node-root-page-1",
+          "pageId": "page-1",
+          "childSceneNodeRefs": [],
+          "strategy": "native",
+          "requiredCapabilities": [
+            "affine-transform",
+            "group"
+          ],
+          "parameters": {
+            "nodeType": "group",
+            "localGeometry": {
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "source-canvas"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "bounds": {
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "content": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "ink": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "effect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                }
+              },
+              "clipStack": [],
+              "maskStack": []
+            },
+            "worldTransform": {
+              "kind": "affine-2d",
+              "matrix": [
+                1,
+                0,
+                0,
+                1,
+                0,
+                0
+              ]
+            },
+            "worldBounds": {
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "content": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "ink": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "effect": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              }
+            },
+            "appearance": {
+              "opacity": 1,
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "blendMode": "normal",
+              "isolation": false
+            },
+            "content": {
+              "kind": "group",
+              "layoutMode": "absolute",
+              "semanticRole": "slide-root"
+            },
+            "drawOrder": 0,
+            "evidenceRefs": []
+          },
+          "resourceRefs": [],
+          "expectedObjects": [
+            {
+              "objectRef": "object-scene-node-root-page-1-primary",
+              "nativeKind": "group",
+              "role": "primary",
+              "virtual": true,
+              "slideId": "page-1",
+              "bbox": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "editableAspects": [],
+              "expectedOoxmlFeatures": []
+            }
+          ],
+          "editabilityContract": {
+            "required": false,
+            "requiredAspects": [],
+            "verificationActions": []
+          },
+          "declaredLosses": []
+        },
+        {
+          "operationId": "operation-scene-node-root-page-2",
+          "sceneNodeRef": "scene-node-root-page-2",
+          "pageId": "page-2",
+          "childSceneNodeRefs": [],
+          "strategy": "native",
+          "requiredCapabilities": [
+            "affine-transform",
+            "group"
+          ],
+          "parameters": {
+            "nodeType": "group",
+            "localGeometry": {
+              "frame": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "source-canvas"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "bounds": {
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "content": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "ink": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                },
+                "effect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 160,
+                  "height": 90,
+                  "unit": "px",
+                  "coordinateSpace": "source-canvas"
+                }
+              },
+              "clipStack": [],
+              "maskStack": []
+            },
+            "worldTransform": {
+              "kind": "affine-2d",
+              "matrix": [
+                1,
+                0,
+                0,
+                1,
+                0,
+                0
+              ]
+            },
+            "worldBounds": {
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "content": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "ink": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "effect": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              }
+            },
+            "appearance": {
+              "opacity": 1,
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "blendMode": "normal",
+              "isolation": false
+            },
+            "content": {
+              "kind": "group",
+              "layoutMode": "absolute",
+              "semanticRole": "slide-root"
+            },
+            "drawOrder": 0,
+            "evidenceRefs": []
+          },
+          "resourceRefs": [],
+          "expectedObjects": [
+            {
+              "objectRef": "object-scene-node-root-page-2-primary",
+              "nativeKind": "group",
+              "role": "primary",
+              "virtual": true,
+              "slideId": "page-2",
+              "bbox": {
+                "x": 0,
+                "y": 0,
+                "width": 160,
+                "height": 90,
+                "unit": "px",
+                "coordinateSpace": "page"
+              },
+              "transform": {
+                "kind": "affine-2d",
+                "matrix": [
+                  1,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              "editableAspects": [],
+              "expectedOoxmlFeatures": []
+            }
+          ],
+          "editabilityContract": {
+            "required": false,
+            "requiredAspects": [],
+            "verificationActions": []
+          },
+          "declaredLosses": []
+        }
+      ],
+      "summary": {
+        "nodeCount": 2,
+        "objectCount": 2,
+        "strategies": {
+          "native": 2,
+          "ooxmlPostprocess": 0,
+          "lowerToPrimitives": 0,
+          "approvedOriginalRaster": 0,
+          "rejected": 0
+        },
+        "hasRejected": false,
+        "hasUnapprovedLoss": false
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "verification-result",
+      "verificationId": "verification-1",
+      "planRef": "plan-1",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "status": "passed",
+      "pageResults": [
+        {
+          "subjectRef": "page-1",
+          "gate": "visual",
+          "status": "passed"
+        },
+        {
+          "subjectRef": "page-2",
+          "gate": "visual",
+          "status": "passed"
+        }
+      ],
+      "evidenceResults": [],
+      "sceneNodeResults": [
+        {
+          "subjectRef": "scene-node-root-page-1",
+          "gate": "scene",
+          "status": "passed"
+        },
+        {
+          "subjectRef": "scene-node-root-page-2",
+          "gate": "scene",
+          "status": "passed"
+        }
+      ],
+      "objectResults": [
+        {
+          "subjectRef": "object-scene-node-root-page-1-primary",
+          "gate": "object",
+          "status": "passed"
+        },
+        {
+          "subjectRef": "object-scene-node-root-page-2-primary",
+          "gate": "object",
+          "status": "passed"
+        }
+      ],
+      "packageSecurity": {
+        "subjectRef": "pptx-package",
+        "gate": "package-security",
+        "status": "passed"
+      },
+      "failures": [],
+      "sourceResults": [
+        {
+          "subjectRef": "source-1",
+          "gate": "source",
+          "status": "passed"
+        }
+      ],
+      "operationResults": [
+        {
+          "subjectRef": "operation-scene-node-root-page-1",
+          "gate": "operation",
+          "status": "passed"
+        },
+        {
+          "subjectRef": "operation-scene-node-root-page-2",
+          "gate": "operation",
+          "status": "passed"
+        }
+      ],
+      "protectedRegionResults": [],
+      "editabilityResults": [
+        {
+          "subjectRef": "object-scene-node-root-page-1-primary",
+          "gate": "editability",
+          "status": "passed"
+        },
+        {
+          "subjectRef": "object-scene-node-root-page-2-primary",
+          "gate": "editability",
+          "status": "passed"
+        }
+      ],
+      "summary": {
+        "totalChecks": 12,
+        "passedChecks": 12,
+        "failedChecks": 0,
+        "skippedChecks": 0,
+        "gateStatus": "passed"
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "contractKind": "delivery-manifest",
+      "manifestId": "delivery-1",
+      "runId": "run-1",
+      "status": "published",
+      "sourcePackageRefs": [
+        "source-1"
+      ],
+      "verificationResultRef": "verification-1",
+      "outputs": [
+        {
+          "digest": "sha256:1000000000000000000000000000000000000000000000000000000000000003",
+          "mediaType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "byteLength": 2048,
+          "storageKey": "runs/run-1/output.pptx",
+          "role": "pptx-output"
+        }
+      ]
+    }
+  ]
+}

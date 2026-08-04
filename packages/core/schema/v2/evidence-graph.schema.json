@@ -1,0 +1,426 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:img2ppt:schema:v2:evidence-graph",
+  "title": "Image-to-PPT V2 Evidence Graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractKind", "graphId", "documentRef", "sourcePackageRefs", "evidence"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "contractKind": { "const": "evidence-graph" },
+    "graphId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "documentRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "sourcePackageRefs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidenceItem" }
+    }
+  },
+  "$defs": {
+    "sourceCanvasBox": {
+      "allOf": [
+        { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+        { "type": "object", "properties": { "coordinateSpace": { "const": "source-canvas" } } }
+      ]
+    },
+    "sourceCanvasPoint": {
+      "allOf": [
+        { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" },
+        { "type": "object", "properties": { "coordinateSpace": { "const": "source-canvas" } } }
+      ]
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeRef", "role"],
+      "properties": {
+        "nodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "role": { "enum": ["primary", "reference", "container", "contained", "source", "target", "front", "back", "predecessor", "successor"] }
+      }
+    },
+    "sourceRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pageId", "box"],
+      "properties": {
+        "pageId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "box": { "$ref": "#/$defs/sourceCanvasBox" },
+        "purpose": { "enum": ["measurement", "context", "protected-region", "mask", "crop"] }
+      }
+    },
+    "tolerance": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": { "mode": { "const": "exact" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "value"],
+          "properties": {
+            "mode": { "const": "absolute" },
+            "value": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "value"],
+          "properties": {
+            "mode": { "const": "ratio" },
+            "value": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "value", "formula"],
+          "properties": {
+            "mode": { "const": "color-delta" },
+            "value": { "type": "number", "minimum": 0 },
+            "formula": { "enum": ["delta-e-76", "delta-e-2000"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "value"],
+          "properties": {
+            "mode": { "const": "edge-distance" },
+            "value": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+          }
+        }
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "producer", "evidenceBlobRefs"],
+      "properties": {
+        "method": { "enum": ["manual-measurement", "ocr", "image-analysis", "design-export", "imported-metadata", "hybrid"] },
+        "producer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "version": { "type": "string", "minLength": 1 }
+          }
+        },
+        "capturedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$" },
+        "notes": { "type": "string" },
+        "evidenceBlobRefs": {
+          "type": "array",
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/blobRef" }
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "basis"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "basis": { "enum": ["direct-pixel-measurement", "recognized-content", "structural-inference", "author-judgment", "mixed"] }
+      }
+    },
+    "textContentMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "text", "normalization", "language", "caseSensitive"],
+      "properties": {
+        "kind": { "const": "text-content" },
+        "text": { "type": "string" },
+        "normalization": { "enum": ["NFC", "NFD", "none"] },
+        "language": { "type": "string", "minLength": 2 },
+        "caseSensitive": { "type": "boolean" }
+      }
+    },
+    "textInkMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "inkBox", "lineBoxes", "clusterBoxes"],
+      "properties": {
+        "kind": { "const": "text-ink" },
+        "inkBox": { "$ref": "#/$defs/sourceCanvasBox" },
+        "lineBoxes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/sourceCanvasBox" } },
+        "clusterBoxes": { "type": "array", "items": { "$ref": "#/$defs/sourceCanvasBox" } }
+      }
+    },
+    "geometryMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "primitive", "box", "points", "transform"],
+      "properties": {
+        "kind": { "const": "geometry" },
+        "primitive": { "enum": ["box", "ellipse", "polygon", "path", "line"] },
+        "box": { "$ref": "#/$defs/sourceCanvasBox" },
+        "points": { "type": "array", "items": { "$ref": "#/$defs/sourceCanvasPoint" } },
+        "transform": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/matrix2d" }
+      }
+    },
+    "edgeMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "points", "width", "polarity"],
+      "properties": {
+        "kind": { "const": "edge" },
+        "points": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/sourceCanvasPoint" } },
+        "width": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "polarity": { "enum": ["dark-to-light", "light-to-dark", "mixed"] }
+      }
+    },
+    "colorMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "samples", "aggregation"],
+      "properties": {
+        "kind": { "const": "color" },
+        "samples": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["point", "color"],
+            "properties": {
+              "point": { "$ref": "#/$defs/sourceCanvasPoint" },
+              "color": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/color" }
+            }
+          }
+        },
+        "aggregation": { "enum": ["exact-samples", "median", "mean", "dominant"] }
+      }
+    },
+    "gradientMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "gradientType", "stops"],
+      "properties": {
+        "kind": { "const": "gradient" },
+        "gradientType": { "enum": ["linear", "radial", "conic"] },
+        "angleDeg": { "type": "number" },
+        "center": { "$ref": "#/$defs/sourceCanvasPoint" },
+        "radiusX": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "radiusY": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "stops": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["offset", "color"],
+            "properties": {
+              "offset": { "type": "number", "minimum": 0, "maximum": 1 },
+              "color": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/color" }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "gradientType": { "const": "linear" } } },
+          "then": { "required": ["angleDeg"] }
+        },
+        {
+          "if": { "properties": { "gradientType": { "enum": ["radial", "conic"] } } },
+          "then": { "required": ["center"] }
+        }
+      ]
+    },
+    "spacingMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "axis", "distance", "fromEdge", "toEdge"],
+      "properties": {
+        "kind": { "const": "spacing" },
+        "axis": { "enum": ["horizontal", "vertical", "euclidean"] },
+        "distance": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "fromEdge": { "enum": ["top", "right", "bottom", "left", "center-x", "center-y"] },
+        "toEdge": { "enum": ["top", "right", "bottom", "left", "center-x", "center-y"] }
+      }
+    },
+    "alignmentMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "axis", "alignment", "offset"],
+      "properties": {
+        "kind": { "const": "alignment" },
+        "axis": { "enum": ["horizontal", "vertical"] },
+        "alignment": { "enum": ["start", "center", "end", "baseline", "distributed"] },
+        "offset": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+      }
+    },
+    "containmentMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "clearance"],
+      "properties": {
+        "kind": { "const": "containment" },
+        "clearance": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/edgeInsets" }
+      }
+    },
+    "overlapMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "intersectionBox", "overlapRatio"],
+      "properties": {
+        "kind": { "const": "overlap" },
+        "intersectionBox": { "$ref": "#/$defs/sourceCanvasBox" },
+        "overlapRatio": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "occlusionMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "frontNodeRef", "backNodeRef", "visibleRatio"],
+      "properties": {
+        "kind": { "const": "occlusion" },
+        "frontNodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "backNodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "visibleRatio": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "maskMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "mode", "bounds", "maskBlobDigest"],
+      "properties": {
+        "kind": { "const": "mask" },
+        "mode": { "enum": ["alpha", "luminance"] },
+        "bounds": { "$ref": "#/$defs/sourceCanvasBox" },
+        "maskBlobDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" }
+      }
+    },
+    "imageRegionMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "resourceDigest", "sourceCrop", "fitMode"],
+      "properties": {
+        "kind": { "const": "image-region" },
+        "resourceDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" },
+        "sourceCrop": { "$ref": "#/$defs/sourceCanvasBox" },
+        "subjectBounds": { "$ref": "#/$defs/sourceCanvasBox" },
+        "fitMode": { "enum": ["fill", "fit", "stretch", "none"] }
+      }
+    },
+    "readingOrderMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "orderedNodeRefs"],
+      "properties": {
+        "kind": { "const": "reading-order" },
+        "orderedNodeRefs": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        }
+      }
+    },
+    "editabilityIntentMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "requiredAspects", "forbiddenFallbacks"],
+      "properties": {
+        "kind": { "const": "editability-intent" },
+        "requiredAspects": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["content", "geometry", "appearance", "text-style", "crop", "path-points", "connector-endpoints", "table-structure", "list-structure", "chart-primitives", "group-membership"] }
+        },
+        "forbiddenFallbacks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["approved-original-raster", "source-derived-composite", "whole-page-raster", "text-raster", "simple-icon-raster"] }
+        }
+      }
+    },
+    "evidenceItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "subjects", "sourceRegions", "measurement", "tolerances", "provenance", "confidence"],
+      "properties": {
+        "id": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "kind": { "enum": ["text-content", "text-ink", "geometry", "edge", "color", "gradient", "spacing", "alignment", "containment", "overlap", "occlusion", "mask", "image-region", "reading-order", "editability-intent"] },
+        "subjects": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/subject" } },
+        "sourceRegions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/sourceRegion" } },
+        "measurement": {},
+        "tolerances": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/tolerance" } },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "text-content" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/textContentMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "text-ink" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/textInkMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "geometry" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/geometryMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "edge" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/edgeMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "color" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/colorMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "gradient" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/gradientMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "spacing" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/spacingMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "alignment" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/alignmentMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "containment" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/containmentMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "overlap" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/overlapMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "occlusion" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/occlusionMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "mask" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/maskMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "image-region" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/imageRegionMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "reading-order" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/readingOrderMeasurement" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "editability-intent" } } },
+          "then": { "properties": { "measurement": { "$ref": "#/$defs/editabilityIntentMeasurement" } } }
+        }
+      ]
+    }
+  }
+}

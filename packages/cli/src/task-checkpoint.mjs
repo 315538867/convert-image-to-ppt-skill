@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import fs from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
 import { sha256BytesDigest } from "@image-to-ppt/core/canonical";
-import { authoringTemplatePath } from "@image-to-ppt/core/resources";
+import { normalizeSource } from "./source-normalizer.mjs";
+import { readCurrentPublication } from "./transactional-publisher.mjs";
 
 function argument(name) {
   const index = process.argv.indexOf(name);
@@ -14,11 +14,12 @@ function pathsFor(workspace) {
   return {
     workspace,
     workDir: path.join(workspace, "work"),
-    outputsDir: path.join(workspace, "outputs"),
+    sourcesDir: path.join(workspace, "sources"),
+    runsDir: path.join(workspace, "runs"),
     statePath: path.join(workspace, "work", "task-state.json"),
-    authoringBundlePath: path.join(workspace, "work", "authoring-task-bundle.json"),
-    analysisCachePath: path.join(workspace, "outputs", "source-analysis-cache.json"),
-    outputPptxPath: path.join(workspace, "outputs", "result.pptx"),
+    sourcePackagePath: path.join(workspace, "sources", "source-package.json"),
+    sourceBlobDir: path.join(workspace, "sources", "blobs"),
+    authorContractsPath: path.join(workspace, "work", "v2-author-contracts.json"),
   };
 }
 
@@ -35,55 +36,87 @@ async function readJson(filePath) {
   return JSON.parse(await fs.readFile(filePath, "utf8"));
 }
 
+function box(width, height) {
+  return { x: 0, y: 0, width, height, unit: "px", coordinateSpace: "source-canvas" };
+}
+
+function emptyGroupRoot(width, height) {
+  const bounds = box(width, height);
+  return {
+    id: "root",
+    type: "group",
+    geometry: {
+      frame: bounds,
+      transform: { kind: "affine-2d", matrix: [1, 0, 0, 1, 0, 0] },
+      bounds: { layout: bounds, content: bounds, ink: bounds, effect: bounds },
+      clipStack: [],
+      maskStack: [],
+    },
+    appearance: { fills: [], strokes: [], effects: [], opacity: 1, blendMode: "normal", isolation: false },
+    content: { kind: "group", semantics: [] },
+    editability: { required: false, requiredAspects: [], allowedFallbacks: [] },
+    evidenceRefs: [],
+    children: [],
+  };
+}
+
+function authorContractsScaffold(sourcePackage) {
+  const page = sourcePackage.pages[0];
+  return {
+    schemaVersion: 2,
+    contracts: [
+      {
+        schemaVersion: 2,
+        contractKind: "reconstruction-spec",
+        documentId: "document-1",
+        sourcePackageRefs: [sourcePackage.sourceId],
+        assetRefs: [],
+        pages: [{ pageId: page.pageId, sourcePageRef: page.pageId, rootNode: emptyGroupRoot(page.canvas.width, page.canvas.height) }],
+        targetIntent: {
+          format: "pptx",
+          editableTextRequired: true,
+          simpleIconsEditableRequired: true,
+          editableStructuresRequired: true,
+          allowApprovedOriginalRaster: false,
+        },
+      },
+      {
+        schemaVersion: 2,
+        contractKind: "evidence-graph",
+        graphId: "evidence-graph-1",
+        documentRef: "document-1",
+        sourcePackageRefs: [sourcePackage.sourceId],
+        evidence: [],
+      },
+    ],
+  };
+}
+
 async function initialize(sourcePath, workspace) {
   const files = pathsFor(workspace);
   const sourceBytes = await fs.readFile(sourcePath);
   const sourceDigest = sha256BytesDigest(sourceBytes);
-  const metadata = await sharp(sourcePath).metadata();
-  if (!metadata.width || !metadata.height) throw new Error("源图片缺少有效尺寸");
   await Promise.all([
     fs.mkdir(files.workDir, { recursive: true }),
-    fs.mkdir(files.outputsDir, { recursive: true }),
+    fs.mkdir(files.sourcesDir, { recursive: true }),
+    fs.mkdir(files.runsDir, { recursive: true }),
   ]);
-
   if (await exists(files.statePath)) {
     const current = await readJson(files.statePath);
-    if (current.source.digest !== sourceDigest) {
-      throw new Error("当前工作区已绑定另一张源图片；请使用新的任务目录，禁止覆盖检查点");
-    }
+    if (current.source.digest !== sourceDigest) throw new Error("当前工作区已绑定另一张源图片；请使用新的任务目录，禁止覆盖检查点");
     return { checkpoint: "resumed", ...current, files };
   }
-
-  await fs.copyFile(authoringTemplatePath, files.authoringBundlePath);
+  const normalized = await normalizeSource({ sourcePath, sourcePackagePath: files.sourcePackagePath, blobDir: files.sourceBlobDir });
+  await fs.writeFile(files.authorContractsPath, JSON.stringify(authorContractsScaffold(normalized.sourcePackage), null, 2) + "\n");
   const state = {
-    stateVersion: 1,
+    stateVersion: 2,
     status: "initialized",
-    source: {
-      path: path.resolve(sourcePath),
-      digest: sourceDigest,
-      width: metadata.width,
-      height: metadata.height,
-    },
-    authoringBundlePath: files.authoringBundlePath,
-    analysisCachePath: files.analysisCachePath,
-    outputPptxPath: files.outputPptxPath,
-    requiredOutputs: [
-      "result.pptx",
-      "result.task-bundle.json",
-      "result.object-manifest.json",
-      "result.preview.png",
-      "result.diff.png",
-      "result.review-sheet.png",
-      "result.source-coverage.json",
-      "result.source-coverage-overlay.png",
-      "result.verification.json",
-      "result.layout.json",
-      "result.build-log.json",
-      "result.environment.json",
-      "source-analysis-cache.json",
-    ],
+    source: { path: path.resolve(sourcePath), digest: sourceDigest, sourcePackagePath: files.sourcePackagePath },
+    authorContractsPath: files.authorContractsPath,
+    workspaceDir: workspace,
+    requiredOutputs: ["current", "runs/<run-id>/delivery-manifest.json", "runs/<run-id>/verification-result.json", "runs/<run-id>/output.pptx"],
   };
-  await fs.writeFile(files.statePath, `${JSON.stringify(state, null, 2)}\n`);
+  await fs.writeFile(files.statePath, JSON.stringify(state, null, 2) + "\n");
   return { checkpoint: "created", ...state, files };
 }
 
@@ -91,32 +124,17 @@ async function status(workspace, requireComplete = false) {
   const files = pathsFor(workspace);
   if (!(await exists(files.statePath))) throw new Error("任务尚未初始化；先运行 task-checkpoint.mjs init");
   const state = await readJson(files.statePath);
-  const present = [];
-  const missing = [];
-  for (const name of state.requiredOutputs) {
-    if (await exists(path.join(files.outputsDir, name))) present.push(name);
-    else missing.push(name);
-  }
-  let verificationStatus = "missing";
-  let bundlePhase = "missing";
-  if (await exists(path.join(files.outputsDir, "result.verification.json"))) {
-    verificationStatus = (await readJson(path.join(files.outputsDir, "result.verification.json"))).status;
-  }
-  if (await exists(path.join(files.outputsDir, "result.task-bundle.json"))) {
-    bundlePhase = (await readJson(path.join(files.outputsDir, "result.task-bundle.json"))).bundlePhase;
-  }
-  const complete = missing.length === 0 && verificationStatus === "passed" && bundlePhase === "final";
+  const current = await readCurrentPublication({ workspaceDir: workspace });
   const result = {
-    status: complete ? "complete" : "in-progress",
+    status: current ? "complete" : "in-progress",
     sourceDigest: state.source.digest,
-    presentCount: present.length,
-    requiredCount: state.requiredOutputs.length,
-    missing,
-    verificationStatus,
-    bundlePhase,
+    authorContractsPath: state.authorContractsPath,
+    current: current?.target ?? null,
+    deliveryManifestPath: current?.manifestPath ?? null,
+    runId: current?.manifest?.runId ?? null,
   };
-  if (requireComplete && !complete) {
-    const error = new Error(`任务未完成: ${JSON.stringify(result)}`);
+  if (requireComplete && !current) {
+    const error = new Error("任务未完成: " + JSON.stringify(result));
     error.result = result;
     throw error;
   }
@@ -128,7 +146,7 @@ async function main() {
   const workspace = path.resolve(argument("--workspace") ?? process.cwd());
   if (command === "init") {
     const sourcePath = process.argv[3];
-    if (!sourcePath || sourcePath.startsWith("--")) throw new Error("用法: task-checkpoint.mjs init <source.png> [--workspace <dir>]");
+    if (!sourcePath || sourcePath.startsWith("--")) throw new Error("用法: task-checkpoint.mjs init <source-image> [--workspace <dir>]");
     console.log(JSON.stringify(await initialize(path.resolve(sourcePath), workspace), null, 2));
     return;
   }
@@ -136,7 +154,7 @@ async function main() {
     console.log(JSON.stringify(await status(workspace, command === "complete"), null, 2));
     return;
   }
-  throw new Error("用法: task-checkpoint.mjs <init|status|complete> [source.png] [--workspace <dir>]");
+  throw new Error("用法: task-checkpoint.mjs <init|status|complete> [source-image] [--workspace <dir>]");
 }
 
 main().catch((error) => {

@@ -1,19 +1,23 @@
 import assert from "node:assert/strict";
-import fs from "node:fs/promises";
+import fs from "node:fs";
+import fsp from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { validateV2Contracts } from "@image-to-ppt/core";
+import { FileBlob, PresentationFile, renderPptxFromBackendPlan } from "@image-to-ppt/renderer-pptx";
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(testDir, "../..");
 const renderer = path.join(projectRoot, "packages", "cli", "src", "image2ppt.mjs");
-const example = path.join(projectRoot, "packages", "core", "examples", "task-bundle-example.json");
-const dir = await fs.mkdtemp(path.join(os.tmpdir(), "img2ppt-vnext-skill-"));
+const checkpoint = path.join(projectRoot, "packages", "cli", "src", "task-checkpoint.mjs");
+const contractsPath = path.join(projectRoot, "packages", "core", "examples", "v2", "minimal-single-page.json");
+const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "img2ppt-v2-skill-"));
 
-async function run(args) {
+async function run(command, args) {
   return await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [renderer, ...args], { stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => { stdout += chunk; });
@@ -23,64 +27,91 @@ async function run(args) {
   });
 }
 
-const source = path.join(dir, "source.png");
-const bootstrapPptx = path.join(dir, "bootstrap.pptx");
-const bootstrapBundle = JSON.parse(await fs.readFile(example, "utf8"));
-const semantic = bootstrapBundle.artifacts.find((artifact) => artifact.artifactType === "semantic-plane");
-const authoredText = semantic.body.slides[0].root.children[0].text;
-assert(authoredText.inkBox);
-assert(authoredText.boundaryPolicy?.minimumClearance);
-const { protectedRegions } = await import("@image-to-ppt/cli");
-assert(protectedRegions(bootstrapBundle).some((item) => item.regionId.endsWith(":text-1:text-ink") && item.category === "text"));
-const { renderPptxFromBundle } = await import("@image-to-ppt/renderer-pptx");
-await renderPptxFromBundle(bootstrapBundle, bootstrapPptx, { previewPath: source });
-const checkpoint = path.join(projectRoot, "packages", "cli", "src", "task-checkpoint.mjs");
-const initialized = await new Promise((resolve, reject) => {
-  const child = spawn(process.execPath, [checkpoint, "init", source, "--workspace", dir], { stdio: ["ignore", "pipe", "pipe"] });
-  let stderr = "";
-  child.stderr.on("data", (chunk) => { stderr += chunk; });
-  child.on("error", reject);
-  child.on("exit", (code) => resolve({ code, stderr }));
-});
-assert.equal(initialized.code, 0, initialized.stderr);
+function parseJsonTail(stdout) {
+  const start = stdout.lastIndexOf("\n{");
+  return JSON.parse(stdout.slice(start >= 0 ? start + 1 : stdout.indexOf("{")));
+}
 
-const output = path.join(dir, "outputs", "result.pptx");
-const analysisCachePath = path.join(dir, "outputs", "source-analysis-cache.json");
-const result = await run([source, "--bundle", example, "--analysis-cache", analysisCachePath, "--output", output]);
-assert.equal(result.code, 0, result.stderr);
-await fs.access(output);
-const verification = JSON.parse(await fs.readFile(output.replace(/\.pptx$/, ".verification.json"), "utf8"));
-assert.equal(verification.status, "passed");
-const coverage = JSON.parse(await fs.readFile(output.replace(/\.pptx$/, ".source-coverage.json"), "utf8"));
-assert.equal(coverage.status, "passed");
-await fs.access(output.replace(/\.pptx$/, ".review-sheet.png"));
-const analysisCache = JSON.parse(await fs.readFile(analysisCachePath, "utf8"));
-assert.equal(analysisCache.verificationStatus, "passed");
-const { inspectSourceAnalysisCache } = await import("@image-to-ppt/cli");
-const cacheStatus = await inspectSourceAnalysisCache({ sourcePath: source, cachePath: analysisCachePath });
-assert.equal(cacheStatus.status, "hit");
-assert.equal("analysis" in cacheStatus, false);
-const finalBundle = JSON.parse(await fs.readFile(output.replace(/\.pptx$/, ".task-bundle.json"), "utf8"));
-const { loadDefaultSchema, validateTaskBundle } = await import("@image-to-ppt/core");
-assert.equal(validateTaskBundle(finalBundle, loadDefaultSchema()).ok, true);
-assert.equal(finalBundle.bundlePhase, "final");
-const manifest = JSON.parse(await fs.readFile(output.replace(/\.pptx$/, ".object-manifest.json"), "utf8"));
-assert.equal(manifest.filter((item) => item.kind === "text" && !item.virtual).length, 9);
-const completed = await new Promise((resolve, reject) => {
-  const child = spawn(process.execPath, [checkpoint, "complete", "--workspace", dir], { stdio: ["ignore", "pipe", "pipe"] });
-  let stdout = "";
-  let stderr = "";
-  child.stdout.on("data", (chunk) => { stdout += chunk; });
-  child.stderr.on("data", (chunk) => { stderr += chunk; });
-  child.on("error", reject);
-  child.on("exit", (code) => resolve({ code, stdout, stderr }));
-});
-assert.equal(completed.code, 0, completed.stderr);
-assert.equal(JSON.parse(completed.stdout).status, "complete");
+async function writeReferenceSourceFromV2Plan({ contractsPath: inputPath, outputPath }) {
+  const bundle = JSON.parse(await fsp.readFile(inputPath, "utf8"));
+  const backendPlan = bundle.contracts.find((contract) => contract.contractKind === "backend-plan");
+  assert(backendPlan, "V2 smoke fixture 缺少 Backend Plan");
+  const pptxPath = path.join(path.dirname(outputPath), "reference.pptx");
+  await renderPptxFromBackendPlan(backendPlan, new Map(), pptxPath);
+  const presentation = await PresentationFile.importPptx(await FileBlob.load(pptxPath));
+  const preview = await presentation.export({ slide: presentation.slides.items[0], format: "png", scale: 1 });
+  await fsp.writeFile(outputPath, new Uint8Array(await preview.arrayBuffer()));
+}
 
-const oldIr = path.join(dir, "old-visual-ir.json");
-await fs.writeFile(oldIr, JSON.stringify({ version: "4.0", document: {}, scene: {} }));
-const rejected = await run([source, "--bundle", oldIr, "--output", path.join(dir, "old.pptx")]);
-assert.notEqual(rejected.code, 0, "旧 Visual IR 4.0 必须被新技能拒绝");
+try {
+  const source = path.join(dir, "source.png");
+  await writeReferenceSourceFromV2Plan({ contractsPath, outputPath: source });
 
-console.log(JSON.stringify({ status: "passed", output, finalArtifactCount: finalBundle.artifacts.length }, null, 2));
+  const workspaceDir = path.join(dir, "workspace");
+  const initialized = await run(process.execPath, [checkpoint, "init", source, "--workspace", workspaceDir]);
+  assert.equal(initialized.code, 0, initialized.stderr);
+  const initializedPayload = parseJsonTail(initialized.stdout);
+  assert.equal(initializedPayload.stateVersion, 2);
+  assert.equal(initializedPayload.authorContractsPath.endsWith("v2-author-contracts.json"), true);
+
+  const result = await run(process.execPath, [
+    renderer,
+    source,
+    "--contracts", contractsPath,
+    "--workspace", workspaceDir,
+    "--run-id", "integration-smoke",
+  ]);
+  assert.equal(result.code, 0, result.stderr);
+  const conversion = parseJsonTail(result.stdout);
+  assert.equal(conversion.status, "passed");
+  assert.equal(conversion.current, "runs/integration-smoke/delivery-manifest.json");
+
+  for (const filePath of [
+    conversion.pptxPath,
+    conversion.sourcePackagePath,
+    conversion.resolvedScenePath,
+    conversion.backendPlanPath,
+    conversion.objectManifestPath,
+    conversion.verificationResultPath,
+    conversion.deliveryManifest,
+    conversion.sourceOverlayPath,
+    conversion.reviewSheetPath,
+    conversion.renderedPagePaths["page-1"],
+    conversion.diffPaths["page-1"],
+  ]) {
+    await fsp.access(filePath);
+  }
+
+  const authorBundle = JSON.parse(await fsp.readFile(contractsPath, "utf8"));
+  const authorContracts = authorBundle.contracts.filter((contract) => ["reconstruction-spec", "evidence-graph"].includes(contract.contractKind));
+  const runtimeContracts = await Promise.all([
+    "sourcePackagePath",
+    "resolvedScenePath",
+    "backendPlanPath",
+    "objectManifestPath",
+    "verificationResultPath",
+    "deliveryManifest",
+  ].map(async (key) => JSON.parse(await fsp.readFile(conversion[key], "utf8"))));
+  const contracts = [...runtimeContracts.slice(0, 1), ...authorContracts, ...runtimeContracts.slice(1)];
+  const validation = validateV2Contracts({ schemaVersion: 2, contracts });
+  assert.equal(validation.ok, true, JSON.stringify(validation.errors, null, 2));
+  assert.equal(contracts.find((contract) => contract.contractKind === "verification-result").status, "passed");
+  assert.equal(contracts.find((contract) => contract.contractKind === "delivery-manifest").status, "published");
+
+  const completed = await run(process.execPath, [checkpoint, "complete", "--workspace", workspaceDir]);
+  assert.equal(completed.code, 0, completed.stderr);
+  assert.equal(parseJsonTail(completed.stdout).status, "complete");
+
+  const rejected = await run(process.execPath, [
+    renderer,
+    source,
+    "--bundle", contractsPath,
+    "--output", path.join(dir, "old.pptx"),
+  ]);
+  assert.notEqual(rejected.code, 0, "V1 --bundle/--output 公共入口必须被拒绝");
+
+  assert.equal(fs.existsSync(path.join(workspaceDir, "outputs", "result.task-bundle.json")), false);
+  console.log(JSON.stringify({ status: "passed", runId: conversion.runId, deliveryManifest: conversion.deliveryManifest }, null, 2));
+} finally {
+  await fsp.rm(dir, { recursive: true, force: true });
+}

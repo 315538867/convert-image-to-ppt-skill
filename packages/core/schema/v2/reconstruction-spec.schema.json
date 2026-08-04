@@ -1,0 +1,1041 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:img2ppt:schema:v2:reconstruction-spec",
+  "title": "Image-to-PPT V2 Reconstruction Spec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractKind", "documentId", "sourcePackageRefs", "pages", "targetIntent"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "contractKind": { "const": "reconstruction-spec" },
+    "documentId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "sourcePackageRefs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+    },
+    "assetRefs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/blobRef" }
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pageId", "sourcePageRef", "rootNode"],
+        "properties": {
+          "pageId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+          "sourcePageRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+          "rootNode": {
+            "allOf": [
+              { "$ref": "#/$defs/node" },
+              { "type": "object", "properties": { "type": { "const": "group" } } }
+            ]
+          }
+        }
+      }
+    },
+    "targetIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "editableTextRequired", "simpleIconsEditableRequired"],
+      "properties": {
+        "format": { "const": "pptx" },
+        "editableTextRequired": { "type": "boolean" },
+        "simpleIconsEditableRequired": { "type": "boolean" },
+        "editableStructuresRequired": { "type": "boolean" },
+        "allowApprovedOriginalRaster": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "sourceCanvasBox": {
+      "allOf": [
+        { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+        { "type": "object", "properties": { "coordinateSpace": { "const": "source-canvas" } } }
+      ]
+    },
+    "transform": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "matrix"],
+          "properties": {
+            "kind": { "const": "affine-2d" },
+            "matrix": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/matrix2d" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "matrix"],
+          "properties": {
+            "kind": { "const": "perspective-3d" },
+            "matrix": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/matrix4x4" }
+          }
+        }
+      ]
+    },
+    "geometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frame", "transform", "bounds", "clipStack", "maskStack"],
+      "properties": {
+        "frame": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+        "transform": { "$ref": "#/$defs/transform" },
+        "transformOrigin": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" },
+        "bounds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["layout", "content", "ink", "effect"],
+          "properties": {
+            "layout": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+            "content": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+            "ink": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+            "effect": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" }
+          }
+        },
+        "clipStack": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["clipNodeRef", "operation"],
+            "properties": {
+              "clipNodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+              "operation": { "enum": ["intersect", "subtract"] }
+            }
+          }
+        },
+        "maskStack": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source", "mode", "invert"],
+            "properties": {
+              "source": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["kind", "nodeRef"],
+                    "properties": {
+                      "kind": { "const": "node" },
+                      "nodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["kind", "blobDigest"],
+                    "properties": {
+                      "kind": { "const": "blob" },
+                      "blobDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" }
+                    }
+                  }
+                ]
+              },
+              "mode": { "enum": ["alpha", "luminance"] },
+              "invert": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "gradientStop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["offset", "color"],
+      "properties": {
+        "offset": { "type": "number", "minimum": 0, "maximum": 1 },
+        "color": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/color" },
+        "midpoint": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "gradient": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "angleDeg", "stops"],
+          "properties": {
+            "type": { "const": "linear" },
+            "angleDeg": { "type": "number" },
+            "stops": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/gradientStop" } }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "center", "radiusX", "radiusY", "stops"],
+          "properties": {
+            "type": { "const": "radial" },
+            "center": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" },
+            "radiusX": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "radiusY": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "stops": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/gradientStop" } }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "center", "startAngleDeg", "stops"],
+          "properties": {
+            "type": { "const": "conic" },
+            "center": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" },
+            "startAngleDeg": { "type": "number" },
+            "stops": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/gradientStop" } }
+          }
+        }
+      ]
+    },
+    "fill": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "color"],
+          "properties": {
+            "kind": { "const": "solid" },
+            "color": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/color" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "gradient"],
+          "properties": {
+            "kind": { "const": "gradient" },
+            "gradient": { "$ref": "#/$defs/gradient" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "resourceDigest", "fitMode", "crop", "opacity"],
+          "properties": {
+            "kind": { "const": "image-pattern" },
+            "resourceDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" },
+            "fitMode": { "enum": ["fill", "fit", "stretch", "tile"] },
+            "crop": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/edgeInsets" },
+            "opacity": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      ]
+    },
+    "strokePaint": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "color"],
+          "properties": {
+            "kind": { "const": "solid" },
+            "color": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/color" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "gradient"],
+          "properties": {
+            "kind": { "const": "gradient" },
+            "gradient": { "$ref": "#/$defs/gradient" }
+          }
+        }
+      ]
+    },
+    "stroke": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paint", "width", "alignment", "side", "dash", "lineCap", "lineJoin"],
+      "properties": {
+        "paint": { "$ref": "#/$defs/strokePaint" },
+        "width": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "alignment": { "enum": ["inside", "center", "outside"] },
+        "side": { "enum": ["all", "top", "right", "bottom", "left"] },
+        "dash": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pattern", "offset"],
+          "properties": {
+            "pattern": { "type": "array", "items": { "type": "number", "exclusiveMinimum": 0 } },
+            "offset": { "type": "number" }
+          }
+        },
+        "lineCap": { "enum": ["butt", "round", "square"] },
+        "lineJoin": { "enum": ["miter", "round", "bevel"] },
+        "miterLimit": { "type": "number", "minimum": 1 },
+        "startMarker": { "enum": ["none", "triangle", "stealth", "diamond", "oval", "open-arrow"] },
+        "endMarker": { "enum": ["none", "triangle", "stealth", "diamond", "oval", "open-arrow"] }
+      }
+    },
+    "effect": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "color", "offsetX", "offsetY", "blurRadius", "spread"],
+          "properties": {
+            "kind": { "enum": ["outer-shadow", "inner-shadow"] },
+            "color": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/color" },
+            "offsetX": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "offsetY": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "blurRadius": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "spread": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "radius"],
+          "properties": {
+            "kind": { "enum": ["blur", "soft-edge"] },
+            "radius": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "color", "radius"],
+          "properties": {
+            "kind": { "const": "glow" },
+            "color": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/color" },
+            "radius": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "opacity", "distance", "blurRadius"],
+          "properties": {
+            "kind": { "const": "reflection" },
+            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+            "distance": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "blurRadius": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+          }
+        }
+      ]
+    },
+    "appearance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["opacity", "fills", "strokes", "effects", "blendMode", "isolation"],
+      "properties": {
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "fills": { "type": "array", "items": { "$ref": "#/$defs/fill" } },
+        "strokes": { "type": "array", "items": { "$ref": "#/$defs/stroke" } },
+        "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } },
+        "blendMode": { "enum": ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion"] },
+        "isolation": { "type": "boolean" }
+      }
+    },
+    "editability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "requiredAspects", "allowedFallbacks"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "requiredAspects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["content", "geometry", "appearance", "text-style", "crop", "path-points", "connector-endpoints", "table-structure", "list-structure", "chart-primitives", "group-membership"] }
+        },
+        "allowedFallbacks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["native", "ooxml-postprocess", "lower-to-primitives", "approved-original-raster", "rejected"] }
+        }
+      }
+    },
+    "groupContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "layoutMode"],
+      "properties": {
+        "kind": { "const": "group" },
+        "layoutMode": { "enum": ["absolute", "stack-horizontal", "stack-vertical", "grid"] },
+        "semanticRole": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+      }
+    },
+    "shapeContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "shapeKind"],
+      "properties": {
+        "kind": { "const": "shape" },
+        "shapeKind": { "enum": ["rectangle", "rounded-rectangle", "ellipse", "line", "polygon", "star", "callout", "freeform"] },
+        "cornerRadii": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["topLeft", "topRight", "bottomRight", "bottomLeft"],
+          "properties": {
+            "topLeft": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "topRight": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "bottomRight": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "bottomLeft": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+          }
+        },
+        "polygonPoints": { "type": "array", "minItems": 3, "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" } },
+        "pathNodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "shapeKind": { "const": "freeform" } } },
+          "then": { "required": ["pathNodeRef"] }
+        }
+      ]
+    },
+    "fontStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fontFamilies", "fontSize", "fontWeight", "fontStyle", "color", "tracking", "baselineShift", "features", "variationAxes"],
+      "properties": {
+        "fontFamilies": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "fontBlobDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" },
+        "fontSize": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "fontWeight": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "fontStyle": { "enum": ["normal", "italic", "oblique"] },
+        "fontStretch": { "type": "number", "exclusiveMinimum": 0 },
+        "color": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/color" },
+        "tracking": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "baselineShift": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "underline": { "enum": ["none", "single", "double", "dotted", "dashed", "wavy"] },
+        "strike": { "enum": ["none", "single", "double"] },
+        "features": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Za-z0-9]{4}$" } },
+        "variationAxes": { "type": "object", "additionalProperties": { "type": "number" } },
+        "language": { "type": "string", "minLength": 2 },
+        "script": { "type": "string", "minLength": 4 }
+      }
+    },
+    "textRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["range", "style"],
+      "properties": {
+        "range": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/range" },
+        "style": { "$ref": "#/$defs/fontStyle" }
+      }
+    },
+    "paragraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["range", "alignment", "direction", "indent", "spacingBefore", "spacingAfter", "lineSpacing"],
+      "properties": {
+        "range": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/range" },
+        "alignment": { "enum": ["left", "center", "right", "justify", "distributed"] },
+        "direction": { "enum": ["ltr", "rtl", "auto"] },
+        "indent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["left", "right", "firstLine"],
+          "properties": {
+            "left": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "right": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "firstLine": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+          }
+        },
+        "spacingBefore": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "spacingAfter": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "lineSpacing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "value"],
+          "properties": {
+            "mode": { "enum": ["exact", "at-least", "multiple"] },
+            "value": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
+      }
+    },
+    "visualLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["range", "box", "baseline", "ascent", "descent"],
+      "properties": {
+        "range": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/range" },
+        "box": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+        "baseline": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "ascent": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "descent": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+      }
+    },
+    "positionedCluster": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["range", "frame", "inkBox", "baseline", "advance", "lineIndex", "shapingIsolation", "paintMode"],
+      "properties": {
+        "range": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/range" },
+        "frame": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+        "inkBox": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+        "baseline": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "advance": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+        "lineIndex": { "type": "integer", "minimum": 0 },
+        "shapingIsolation": { "enum": ["independent", "context-required"] },
+        "paintMode": { "enum": ["glyph", "advance-only"] }
+      }
+    },
+    "textContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "text", "normalization", "language", "direction", "writingMode", "indexing", "runs", "paragraphs", "layout", "measurements"],
+      "properties": {
+        "kind": { "const": "text" },
+        "text": { "type": "string" },
+        "normalization": { "enum": ["NFC", "NFD", "none"] },
+        "language": { "type": "string", "minLength": 2 },
+        "direction": { "enum": ["ltr", "rtl", "auto"] },
+        "writingMode": { "enum": ["horizontal-tb", "vertical-rl", "vertical-lr"] },
+        "indexing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["segmentation", "utf16Boundaries"],
+          "properties": {
+            "segmentation": { "const": "unicode-grapheme-cluster" },
+            "utf16Boundaries": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "runs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/textRun" } },
+        "paragraphs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/paragraph" } },
+        "hardBreakRanges": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/range" } },
+        "layout": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "wrapMode", "overflow", "verticalAlign", "padding"],
+          "properties": {
+            "mode": { "enum": ["native-flow", "positioned-clusters"] },
+            "wrapMode": { "enum": ["none", "source-visual-lines", "native"] },
+            "overflow": { "enum": ["visible", "clip", "ellipsis", "shrink-to-fit"] },
+            "verticalAlign": { "enum": ["top", "middle", "bottom"] },
+            "padding": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/edgeInsets" }
+          }
+        },
+        "measurements": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inkBounds", "visualLines", "positionedClusters"],
+          "properties": {
+            "inkBounds": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+            "visualLines": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/visualLine" } },
+            "positionedClusters": { "type": "array", "items": { "$ref": "#/$defs/positionedCluster" } }
+          }
+        }
+      }
+    },
+    "pathCommand": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command", "to"],
+          "properties": {
+            "command": { "enum": ["move-to", "line-to"] },
+            "to": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command", "control", "to"],
+          "properties": {
+            "command": { "const": "quadratic-to" },
+            "control": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" },
+            "to": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command", "control1", "control2", "to"],
+          "properties": {
+            "command": { "const": "cubic-to" },
+            "control1": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" },
+            "control2": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" },
+            "to": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command", "rx", "ry", "rotationDeg", "largeArc", "sweep", "to"],
+          "properties": {
+            "command": { "const": "arc-to" },
+            "rx": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "ry": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" },
+            "rotationDeg": { "type": "number" },
+            "largeArc": { "type": "boolean" },
+            "sweep": { "type": "boolean" },
+            "to": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command"],
+          "properties": { "command": { "const": "close" } }
+        }
+      ]
+    },
+    "pathContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "fillRule", "commands"],
+      "properties": {
+        "kind": { "const": "path" },
+        "fillRule": { "enum": ["nonzero", "evenodd"] },
+        "commands": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/pathCommand" } }
+      }
+    },
+    "imageContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "resourceDigest", "contentKind", "derivation", "sourceRegion", "fitMode", "crop", "focalPoint", "colorAdjustments", "rasterApproval"],
+      "properties": {
+        "kind": { "const": "image" },
+        "resourceDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" },
+        "contentKind": { "enum": ["photograph", "texture", "brand-mark", "complex-illustration", "diagram-fragment", "source-derived-composite"] },
+        "derivation": { "enum": ["original-asset", "source-crop", "source-derived-composite"] },
+        "sourceRegion": { "$ref": "#/$defs/sourceCanvasBox" },
+        "fitMode": { "enum": ["fill", "fit", "stretch", "none"] },
+        "crop": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/edgeInsets" },
+        "focalPoint": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" },
+        "subjectBounds": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+        "colorAdjustments": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["brightness", "contrast", "saturation", "temperature"],
+          "properties": {
+            "brightness": { "type": "number", "minimum": -1, "maximum": 1 },
+            "contrast": { "type": "number", "minimum": -1, "maximum": 1 },
+            "saturation": { "type": "number", "minimum": -1, "maximum": 1 },
+            "temperature": { "type": "number", "minimum": -1, "maximum": 1 }
+          }
+        },
+        "rasterApproval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "rationale"],
+          "properties": {
+            "status": { "enum": ["approved-original-raster", "not-approved"] },
+            "rationale": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "rasterApproval": {
+                "type": "object",
+                "properties": { "status": { "const": "approved-original-raster" } }
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "contentKind": { "enum": ["photograph", "texture", "brand-mark", "complex-illustration"] },
+              "derivation": { "enum": ["original-asset", "source-crop"] }
+            }
+          }
+        }
+      ]
+    },
+    "iconContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "semanticName", "representation", "sourceRegion"],
+      "properties": {
+        "kind": { "const": "icon" },
+        "semanticName": { "type": "string", "minLength": 1 },
+        "representation": { "const": "editable-vector" },
+        "sourceRegion": { "$ref": "#/$defs/sourceCanvasBox" }
+      }
+    },
+    "connectorEndpoint": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "point"],
+          "properties": {
+            "kind": { "const": "point" },
+            "point": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "nodeRef", "anchor"],
+          "properties": {
+            "kind": { "const": "node-anchor" },
+            "nodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+            "anchor": { "enum": ["top", "right", "bottom", "left", "center", "custom"] },
+            "anchorPoint": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" }
+          }
+        }
+      ]
+    },
+    "connectorContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "routing", "start", "end", "waypoints"],
+      "properties": {
+        "kind": { "const": "connector" },
+        "routing": { "enum": ["straight", "elbow", "curved", "custom"] },
+        "start": { "$ref": "#/$defs/connectorEndpoint" },
+        "end": { "$ref": "#/$defs/connectorEndpoint" },
+        "waypoints": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/point" } },
+        "pathNodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "routing": { "const": "custom" } } },
+          "then": { "required": ["pathNodeRef"] }
+        }
+      ]
+    },
+    "tableContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "columnWidths", "rowHeights", "headerRows", "headerColumns"],
+      "properties": {
+        "kind": { "const": "table" },
+        "columnWidths": { "type": "array", "minItems": 1, "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" } },
+        "rowHeights": { "type": "array", "minItems": 1, "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" } },
+        "headerRows": { "type": "integer", "minimum": 0 },
+        "headerColumns": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "tableRowContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "rowIndex", "height"],
+      "properties": {
+        "kind": { "const": "table-row" },
+        "rowIndex": { "type": "integer", "minimum": 0 },
+        "height": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/length" }
+      }
+    },
+    "tableCellContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "cellId", "rowIndex", "columnIndex", "rowSpan", "columnSpan", "padding", "verticalAlign", "horizontalAlign"],
+      "properties": {
+        "kind": { "const": "table-cell" },
+        "cellId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "rowIndex": { "type": "integer", "minimum": 0 },
+        "columnIndex": { "type": "integer", "minimum": 0 },
+        "rowSpan": { "type": "integer", "minimum": 1 },
+        "columnSpan": { "type": "integer", "minimum": 1 },
+        "mergeMasterRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "padding": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/edgeInsets" },
+        "verticalAlign": { "enum": ["top", "middle", "bottom"] },
+        "horizontalAlign": { "enum": ["left", "center", "right", "justify"] }
+      }
+    },
+    "listContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "listKind", "start", "markerPosition"],
+      "properties": {
+        "kind": { "const": "list" },
+        "listKind": { "enum": ["ordered", "unordered", "task"] },
+        "start": { "type": "integer", "minimum": 0 },
+        "markerPosition": { "enum": ["outside", "inside"] }
+      }
+    },
+    "listItemContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "level", "marker"],
+      "properties": {
+        "kind": { "const": "list-item" },
+        "level": { "type": "integer", "minimum": 0 },
+        "marker": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "text"],
+          "properties": {
+            "kind": { "enum": ["number", "bullet", "checkbox", "custom"] },
+            "text": { "type": "string" },
+            "checked": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "chartSeries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seriesId", "name", "values"],
+      "properties": {
+        "seriesId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "name": { "type": "string" },
+        "categories": { "type": "array", "items": { "type": "string" } },
+        "values": { "type": "array", "items": { "type": ["number", "null"] } }
+      }
+    },
+    "chartContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "chartType", "dataSemantics", "axes", "legend", "series"],
+      "properties": {
+        "kind": { "const": "chart" },
+        "chartType": { "enum": ["bar", "column", "line", "area", "pie", "donut", "scatter", "radar", "combo", "custom"] },
+        "dataSemantics": { "enum": ["known", "unknown"] },
+        "dataProvenanceEvidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "axes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["axisId", "role", "scale"],
+            "properties": {
+              "axisId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+              "role": { "enum": ["category", "value", "x", "y", "radial", "angular"] },
+              "scale": { "enum": ["linear", "log", "category", "time", "unknown"] },
+              "minimum": { "type": "number" },
+              "maximum": { "type": "number" }
+            }
+          }
+        },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["visible", "position"],
+          "properties": {
+            "visible": { "type": "boolean" },
+            "position": { "enum": ["top", "right", "bottom", "left", "overlay", "none"] }
+          }
+        },
+        "series": { "type": "array", "items": { "$ref": "#/$defs/chartSeries" } }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "dataSemantics": { "const": "known" } } },
+          "then": {
+            "required": ["dataProvenanceEvidenceRefs"],
+            "properties": {
+              "dataProvenanceEvidenceRefs": { "type": "array", "minItems": 1 },
+              "series": { "type": "array", "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "dataSemantics": { "const": "unknown" } } },
+          "then": { "properties": { "series": { "type": "array", "maxItems": 0 } } }
+        }
+      ]
+    },
+    "customSemanticContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "semanticType", "metadataOnly", "metadata"],
+      "properties": {
+        "kind": { "const": "custom-semantic" },
+        "semanticType": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "metadataOnly": { "const": true },
+        "metadata": { "type": "object" }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "geometry", "appearance", "content", "editability", "evidenceRefs", "children"],
+      "properties": {
+        "id": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "type": { "enum": ["group", "shape", "text", "path", "image", "icon", "connector", "table", "table-row", "table-cell", "list", "list-item", "chart", "custom-semantic"] },
+        "geometry": { "$ref": "#/$defs/geometry" },
+        "appearance": { "$ref": "#/$defs/appearance" },
+        "content": {},
+        "editability": { "$ref": "#/$defs/editability" },
+        "evidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "group" } } },
+          "then": { "type": "object", "properties": { "content": { "$ref": "#/$defs/groupContent" } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "shape" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/shapeContent" },
+              "children": { "type": "array", "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "text" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/textContent" },
+              "children": { "type": "array", "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "path" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/pathContent" },
+              "children": { "type": "array", "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "image" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/imageContent" },
+              "children": { "type": "array", "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "icon" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/iconContent" },
+              "children": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "allOf": [
+                    { "$ref": "#/$defs/node" },
+                    { "type": "object", "properties": { "type": { "enum": ["group", "shape", "path"] } } }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "connector" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/connectorContent" },
+              "children": { "type": "array", "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "table" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/tableContent" },
+              "children": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "allOf": [
+                    { "$ref": "#/$defs/node" },
+                    { "type": "object", "properties": { "type": { "const": "table-row" } } }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "table-row" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/tableRowContent" },
+              "children": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "allOf": [
+                    { "$ref": "#/$defs/node" },
+                    { "type": "object", "properties": { "type": { "const": "table-cell" } } }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "table-cell" } } },
+          "then": { "type": "object", "properties": { "content": { "$ref": "#/$defs/tableCellContent" } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "list" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/listContent" },
+              "children": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "allOf": [
+                    { "$ref": "#/$defs/node" },
+                    { "type": "object", "properties": { "type": { "const": "list-item" } } }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "list-item" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/listItemContent" },
+              "children": { "type": "array", "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "chart" } } },
+          "then": {
+            "properties": { "content": { "$ref": "#/$defs/chartContent" } },
+            "allOf": [
+              {
+                "if": {
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "object",
+                      "properties": { "dataSemantics": { "const": "unknown" } }
+                    }
+                  }
+                },
+                "then": { "properties": { "children": { "type": "array", "minItems": 1 } } }
+              }
+            ]
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "type": { "const": "custom-semantic" } } },
+          "then": {
+            "properties": {
+              "content": { "$ref": "#/$defs/customSemanticContent" },
+              "children": { "type": "array", "minItems": 1 }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

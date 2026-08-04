@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:img2ppt:schema:v2:object-manifest",
+  "title": "Image-to-PPT V2 Object Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractKind", "manifestId", "planRef", "outputPptx", "pages", "objects"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "contractKind": { "const": "object-manifest" },
+    "manifestId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "planRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "outputPptx": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["digest", "byteLength", "mediaType"],
+      "properties": {
+        "digest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" },
+        "byteLength": { "type": "integer", "minimum": 1 },
+        "mediaType": { "const": "application/vnd.openxmlformats-officedocument.presentationml.presentation" }
+      }
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pageId", "objectRefs"],
+        "properties": {
+          "pageId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+          "objectRefs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+          }
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/object" }
+    }
+  },
+  "$defs": {
+    "actualFeature": {
+      "enum": ["native-shape", "native-text", "rich-text-runs", "manual-text-metrics", "custom-geometry", "picture-crop", "connector-binding", "grouping", "native-table", "native-chart", "alpha-mask", "luminance-mask", "effect-list"]
+    },
+    "actualTransform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "rotationDeg", "flipHorizontal", "flipVertical"],
+      "properties": {
+        "kind": { "const": "ooxml-2d" },
+        "rotationDeg": { "type": "number" },
+        "flipHorizontal": { "type": "boolean" },
+        "flipVertical": { "type": "boolean" }
+      }
+    },
+    "object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectRef", "sceneNodeId", "operationId", "slideId", "virtual", "ooxmlObjectIds", "nativeObjectKind", "bbox", "transform", "contentDigest", "editability", "actualOoxmlFeatures", "relationshipIds"],
+      "properties": {
+        "objectRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "sceneNodeId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "operationId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "slideId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "virtual": { "type": "boolean" },
+        "ooxmlObjectIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "nativeObjectKind": { "enum": ["virtual", "group", "shape", "text", "path", "image", "connector", "table", "chart"] },
+        "bbox": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+        "transform": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/actualTransform" }] },
+        "contentDigest": { "oneOf": [{ "type": "null" }, { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" }] },
+        "editability": { "$ref": "urn:img2ppt:schema:v2:backend-plan#/$defs/editabilityContract" },
+        "actualOoxmlFeatures": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/actualFeature" } },
+        "relationshipIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "virtual": { "const": true } }, "required": ["virtual"] },
+          "then": {
+            "properties": {
+              "nativeObjectKind": { "const": "virtual" },
+              "ooxmlObjectIds": { "type": "array", "maxItems": 0 },
+              "transform": { "type": "null" },
+              "contentDigest": { "type": "null" },
+              "actualOoxmlFeatures": { "type": "array", "maxItems": 0 },
+              "relationshipIds": { "type": "array", "maxItems": 0 }
+            }
+          },
+          "else": {
+            "properties": {
+              "nativeObjectKind": { "not": { "const": "virtual" } },
+              "ooxmlObjectIds": { "type": "array", "minItems": 1 },
+              "transform": { "$ref": "#/$defs/actualTransform" },
+              "contentDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

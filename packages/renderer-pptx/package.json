@@ -6,8 +6,10 @@
   "exports": {
     ".": "./src/index.mjs",
     "./artifact-tool": "./src/artifact-tool-loader.mjs",
+    "./backend-plan": "./src/backend-planner.mjs",
     "./inspect": "./src/inspect-pptx.mjs",
-    "./render": "./src/render-pptx.mjs"
+    "./render-backend-plan": "./src/render-backend-plan.mjs",
+    "./render": "./src/render-backend-plan.mjs"
   },
   "dependencies": {
     "@image-to-ppt/core": "0.1.0",

@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:img2ppt:schema:v2:shared",
+  "title": "Image-to-PPT V2 Shared Definitions",
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:-]{0,127}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "mediaType": { "type": "string", "pattern": "^[a-z0-9.+-]+/[a-z0-9.+-]+$" },
+    "lengthUnit": { "enum": ["px", "pt", "emu", "ratio"] },
+    "length": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number" },
+        "unit": { "$ref": "#/$defs/lengthUnit" }
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "unit"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "unit": { "const": "px" }
+      }
+    },
+    "box": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height", "unit", "coordinateSpace"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 },
+        "unit": { "$ref": "#/$defs/lengthUnit" },
+        "coordinateSpace": { "enum": ["source-canvas", "page", "parent", "local"] }
+      }
+    },
+    "matrix2d": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": { "type": "number" }
+    },
+    "matrix4x4": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": { "type": "number" }
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "unit", "coordinateSpace"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "unit": { "$ref": "#/$defs/lengthUnit" },
+        "coordinateSpace": { "enum": ["source-canvas", "page", "parent", "local"] }
+      }
+    },
+    "edgeInsets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top", "right", "bottom", "left", "unit"],
+      "properties": {
+        "top": { "type": "number" },
+        "right": { "type": "number" },
+        "bottom": { "type": "number" },
+        "left": { "type": "number" },
+        "unit": { "$ref": "#/$defs/lengthUnit" }
+      }
+    },
+    "color": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["space", "components", "alpha"],
+      "properties": {
+        "space": { "enum": ["srgb", "display-p3"] },
+        "components": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "alpha": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "blobRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["digest", "mediaType", "byteLength", "role"],
+      "properties": {
+        "digest": { "$ref": "#/$defs/digest" },
+        "mediaType": { "$ref": "#/$defs/mediaType" },
+        "byteLength": { "type": "integer", "minimum": 0 },
+        "storageKey": { "type": "string", "minLength": 1 },
+        "role": { "$ref": "#/$defs/identifier" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "channels": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "sourceRegion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pageId", "box"],
+          "properties": {
+            "pageId": { "$ref": "#/$defs/identifier" },
+            "box": { "$ref": "#/$defs/box" }
+          }
+        }
+      }
+    }
+  }
+}

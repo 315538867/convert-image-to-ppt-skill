@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:img2ppt:schema:v2:backend-plan",
+  "title": "Image-to-PPT V2 Backend Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractKind", "planId", "sceneRef", "targetProfile", "pages", "resources", "operations", "summary"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "contractKind": { "const": "backend-plan" },
+    "planId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "sceneRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "targetProfile": { "$ref": "#/$defs/targetProfile" },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pageId", "canvas"],
+        "properties": {
+          "pageId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+          "canvas": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/canvas" }
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/blobRef" }
+    },
+    "operations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/operation" } },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeCount", "objectCount", "strategies", "hasRejected", "hasUnapprovedLoss"],
+      "properties": {
+        "nodeCount": { "type": "integer", "minimum": 0 },
+        "objectCount": { "type": "integer", "minimum": 0 },
+        "strategies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["native", "ooxmlPostprocess", "lowerToPrimitives", "approvedOriginalRaster", "rejected"],
+          "properties": {
+            "native": { "type": "integer", "minimum": 0 },
+            "ooxmlPostprocess": { "type": "integer", "minimum": 0 },
+            "lowerToPrimitives": { "type": "integer", "minimum": 0 },
+            "approvedOriginalRaster": { "type": "integer", "minimum": 0 },
+            "rejected": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "hasRejected": { "type": "boolean" },
+        "hasUnapprovedLoss": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "capabilityName": {
+      "enum": [
+        "group",
+        "shape",
+        "text",
+        "path",
+        "image",
+        "icon",
+        "connector",
+        "table",
+        "list",
+        "chart",
+        "custom-semantic",
+        "solid-fill",
+        "linear-gradient",
+        "radial-gradient",
+        "conic-gradient",
+        "per-side-border",
+        "affine-transform",
+        "affine-shear",
+        "perspective-transform",
+        "clip-stack",
+        "alpha-mask",
+        "luminance-mask",
+        "outer-shadow",
+        "inner-shadow",
+        "blur",
+        "soft-edge",
+        "glow",
+        "reflection",
+        "native-flow-text",
+        "positioned-cluster-text",
+        "rich-text-run-metrics",
+        "connector-anchor",
+        "connector-custom-path",
+        "native-table",
+        "native-chart",
+        "approved-original-raster"
+      ]
+    },
+    "capabilitySet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/capabilityName" }
+    },
+    "targetProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "backend", "backendVersion", "nativeCapabilities", "ooxmlPostprocessCapabilities", "primitiveLoweringCapabilities", "approvedRasterCapabilities", "unsupportedCapabilities", "limits"],
+      "properties": {
+        "profileId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "backend": { "const": "pptx" },
+        "backendVersion": { "type": "string", "minLength": 1 },
+        "nativeCapabilities": { "$ref": "#/$defs/capabilitySet" },
+        "ooxmlPostprocessCapabilities": { "$ref": "#/$defs/capabilitySet" },
+        "primitiveLoweringCapabilities": { "$ref": "#/$defs/capabilitySet" },
+        "approvedRasterCapabilities": { "$ref": "#/$defs/capabilitySet" },
+        "unsupportedCapabilities": { "$ref": "#/$defs/capabilitySet" },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maxSlides", "maxObjectsPerSlide", "maxPathCommandsPerObject", "maxTotalPathCommands", "maxOutputBytes"],
+          "properties": {
+            "maxSlides": { "type": "integer", "minimum": 1 },
+            "maxObjectsPerSlide": { "type": "integer", "minimum": 1 },
+            "maxPathCommandsPerObject": { "type": "integer", "minimum": 1 },
+            "maxTotalPathCommands": { "type": "integer", "minimum": 1 },
+            "maxOutputBytes": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "expectedObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectRef", "slideId", "nativeKind", "role", "virtual", "bbox", "transform", "editableAspects", "expectedOoxmlFeatures"],
+      "properties": {
+        "objectRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "slideId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "nativeKind": { "enum": ["group", "shape", "text", "path", "image", "connector", "table", "chart"] },
+        "role": { "enum": ["primary", "background", "fill", "border-top", "border-right", "border-bottom", "border-left", "mask", "effect", "glyph-run", "chart-primitive", "table-primitive"] },
+        "virtual": { "type": "boolean" },
+        "bbox": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+        "transform": { "$ref": "urn:img2ppt:schema:v2:reconstruction-spec#/$defs/transform" },
+        "editableAspects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["content", "geometry", "appearance", "text-style", "crop", "path-points", "connector-endpoints", "table-structure", "list-structure", "chart-primitives", "group-membership"] }
+        },
+        "expectedOoxmlFeatures": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["native-shape", "native-text", "rich-text-runs", "manual-text-metrics", "custom-geometry", "picture-crop", "connector-binding", "grouping", "native-table", "native-chart", "alpha-mask", "luminance-mask", "effect-list"] }
+        }
+      }
+    },
+    "editabilityContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "requiredAspects", "verificationActions"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "requiredAspects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["content", "geometry", "appearance", "text-style", "crop", "path-points", "connector-endpoints", "table-structure", "list-structure", "chart-primitives", "group-membership"] }
+        },
+        "verificationActions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["modify-content", "modify-geometry", "modify-appearance", "modify-text-style", "modify-crop", "modify-path-points", "modify-connector-endpoints", "modify-table-structure", "modify-list-structure", "modify-chart-primitives", "modify-group-membership", "save-reopen-inspect"] }
+        }
+      }
+    },
+    "declaredLoss": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "category", "description", "approved", "affectedAspects"],
+      "properties": {
+        "code": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "category": { "enum": ["visual", "editability", "semantic", "accessibility", "performance"] },
+        "description": { "type": "string", "minLength": 1 },
+        "approved": { "type": "boolean" },
+        "affectedAspects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["content", "geometry", "appearance", "text-style", "crop", "path-points", "connector-endpoints", "table-structure", "list-structure", "chart-primitives", "group-membership"] }
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operationId", "sceneNodeRef", "pageId", "childSceneNodeRefs", "strategy", "requiredCapabilities", "parameters", "resourceRefs", "expectedObjects", "editabilityContract", "declaredLosses"],
+      "properties": {
+        "operationId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "sceneNodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "pageId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "parentSceneNodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "childSceneNodeRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "strategy": { "enum": ["native", "ooxml-postprocess", "lower-to-primitives", "approved-original-raster", "rejected"] },
+        "requiredCapabilities": { "$ref": "#/$defs/capabilitySet" },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["nodeType", "localGeometry", "worldTransform", "worldBounds", "appearance", "content", "drawOrder", "evidenceRefs"],
+          "properties": {
+            "nodeType": { "enum": ["group", "shape", "text", "path", "image", "icon", "connector", "table", "table-row", "table-cell", "list", "list-item", "chart", "custom-semantic"] },
+            "localGeometry": { "$ref": "urn:img2ppt:schema:v2:reconstruction-spec#/$defs/geometry" },
+            "worldTransform": { "$ref": "urn:img2ppt:schema:v2:reconstruction-spec#/$defs/transform" },
+            "worldBounds": { "$ref": "urn:img2ppt:schema:v2:resolved-scene#/$defs/worldBounds" },
+            "appearance": { "$ref": "urn:img2ppt:schema:v2:reconstruction-spec#/$defs/appearance" },
+            "content": { "$ref": "urn:img2ppt:schema:v2:resolved-scene#/$defs/content" },
+            "drawOrder": { "type": "integer", "minimum": 0 },
+            "evidenceRefs": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+            }
+          }
+        },
+        "resourceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" }
+        },
+        "expectedObjects": { "type": "array", "items": { "$ref": "#/$defs/expectedObject" } },
+        "editabilityContract": { "$ref": "#/$defs/editabilityContract" },
+        "declaredLosses": { "type": "array", "items": { "$ref": "#/$defs/declaredLoss" } },
+        "rejectionReason": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message", "unsupportedCapabilities"],
+          "properties": {
+            "code": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+            "message": { "type": "string", "minLength": 1 },
+            "unsupportedCapabilities": { "$ref": "#/$defs/capabilitySet" }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "strategy": { "const": "rejected" } } },
+          "then": { "required": ["rejectionReason"], "properties": { "expectedObjects": { "type": "array", "maxItems": 0 } } },
+          "else": { "properties": { "expectedObjects": { "type": "array", "minItems": 1 } } }
+        }
+      ]
+    }
+  }
+}

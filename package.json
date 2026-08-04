@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "基于六平面任务束的高还原度可编辑图片转 PowerPoint 引擎",
+  "description": "基于 V2 契约流水线的高还原度可编辑图片转 PowerPoint 引擎",
   "workspaces": [
     "packages/*"
   ],
@@ -15,7 +15,7 @@
     "build:skill": "node scripts/build-skill.mjs",
     "install:skill": "npm run build:skill && node scripts/install-skill.mjs",
     "preflight": "node packages/cli/src/preflight.mjs",
-    "validate:bundle": "node packages/core/src/validate-task-bundle.mjs packages/core/examples/task-bundle-example.json",
+    "validate:contracts": "node packages/core/src/validate-v2-contracts.mjs packages/core/examples/v2/minimal-single-page.json",
     "test:core": "node --test tests/unit/*.test.mjs",
     "test:integration": "node tests/integration/smoke.mjs",
     "test:skill": "node scripts/test-built-skill.mjs",

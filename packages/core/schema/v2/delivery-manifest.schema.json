@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:img2ppt:schema:v2:delivery-manifest",
+  "title": "Image-to-PPT V2 Delivery Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractKind", "manifestId", "runId", "status", "sourcePackageRefs", "verificationResultRef", "outputs"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "contractKind": { "const": "delivery-manifest" },
+    "manifestId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "runId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "status": { "const": "published" },
+    "sourcePackageRefs": { "type": "array", "minItems": 1, "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
+    "verificationResultRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+    "outputs": { "type": "array", "minItems": 1, "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/blobRef" } },
+    "publishedAt": { "type": "string" }
+  }
+}

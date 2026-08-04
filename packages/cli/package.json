@@ -13,6 +13,8 @@
   "dependencies": {
     "@image-to-ppt/core": "0.1.0",
     "@image-to-ppt/renderer-pptx": "0.1.0",
+    "@xmldom/xmldom": "0.8.13",
+    "fflate": "0.8.3",
     "sharp": "0.35.3"
   }
 }
