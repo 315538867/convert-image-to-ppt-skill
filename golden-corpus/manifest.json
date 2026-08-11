@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "corpusId": "image-to-ppt-independent-golden-corpus",
+  "referencePolicy": {
+    "independentReferenceRequired": true,
+    "rendererGeneratedReferencesAllowed": false,
+    "pathPrefix": "golden-corpus/",
+    "forbiddenPathFragments": [
+      "packages/core/examples/",
+      "tests/unit/",
+      "dist/convert-image-to-ppt/examples/"
+    ]
+  },
+  "qualityGates": {
+    "global": { "pixel": 0.94, "edge": 0.88, "weightedVisualScore": 0.91 },
+    "component": { "pixel": 0.94, "edge": 0.88, "maxFailedComponents": 0 },
+    "required": ["editability", "object-manifest", "package-safety"],
+    "independentReferenceRequired": true
+  },
+  "samples": [
+    { "sampleId": "text-dense", "sampleKind": "text", "status": "asset-ready", "independentReference": true, "thresholds": { "pixel": 0.94, "edge": 0.90 }, "sourcePath": "golden-corpus/references/text-dense.png", "referencePath": "golden-corpus/references/text-dense.png", "contractsPath": "golden-corpus/contracts/text-dense.json" },
+    { "sampleId": "table-grid", "sampleKind": "table", "status": "asset-ready", "independentReference": true, "thresholds": { "pixel": 0.93, "edge": 0.87 }, "sourcePath": "golden-corpus/references/table-grid.png", "referencePath": "golden-corpus/references/table-grid.png", "contractsPath": "golden-corpus/contracts/table-grid.json" },
+    { "sampleId": "flowchart-structure", "sampleKind": "flowchart", "status": "asset-ready", "independentReference": true, "thresholds": { "pixel": 0.92, "edge": 0.88 }, "sourcePath": "golden-corpus/references/flowchart-structure.png", "referencePath": "golden-corpus/references/flowchart-structure.png", "contractsPath": "golden-corpus/contracts/flowchart-structure.json" },
+    { "sampleId": "chart-primitives", "sampleKind": "chart", "status": "asset-ready", "independentReference": true, "thresholds": { "pixel": 0.92, "edge": 0.86 }, "sourcePath": "golden-corpus/references/chart-primitives.png", "referencePath": "golden-corpus/references/chart-primitives.png", "contractsPath": "golden-corpus/contracts/chart-primitives.json" },
+    { "sampleId": "transparent-alpha", "sampleKind": "transparent", "status": "asset-ready", "independentReference": true, "thresholds": { "pixel": 0.90, "edge": 0.82 }, "sourcePath": "golden-corpus/references/transparent-alpha.png", "referencePath": "golden-corpus/references/transparent-alpha.png", "contractsPath": "golden-corpus/contracts/transparent-alpha.json" },
+    { "sampleId": "gradient-fill", "sampleKind": "gradient", "status": "asset-ready", "independentReference": true, "thresholds": { "pixel": 0.92, "edge": 0.84 }, "sourcePath": "golden-corpus/references/gradient-fill.png", "referencePath": "golden-corpus/references/gradient-fill.png", "contractsPath": "golden-corpus/contracts/gradient-fill.json" },
+    { "sampleId": "shadow-effects", "sampleKind": "shadow", "status": "asset-ready", "independentReference": true, "thresholds": { "pixel": 0.90, "edge": 0.80 }, "sourcePath": "golden-corpus/references/shadow-effects.png", "referencePath": "golden-corpus/references/shadow-effects.png", "contractsPath": "golden-corpus/contracts/shadow-effects.json" },
+    { "sampleId": "multi-page-template", "sampleKind": "multi-page", "status": "asset-ready", "independentReference": true, "thresholds": { "pixel": 0.91, "edge": 0.84 }, "sourcePath": "golden-corpus/references/multi-page-template.png", "referencePath": "golden-corpus/references/multi-page-template.png", "contractsPath": "golden-corpus/contracts/multi-page-template.json" },
+    { "sampleId": "low-clarity-input", "sampleKind": "low-clarity", "status": "asset-ready", "independentReference": true, "thresholds": { "pixel": 0.82, "edge": 0.72 }, "sourcePath": "golden-corpus/references/low-clarity-input.png", "referencePath": "golden-corpus/references/low-clarity-input.png", "contractsPath": "golden-corpus/contracts/low-clarity-input.json" }
+  ]
+}

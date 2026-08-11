@@ -1,4 +1,4 @@
-import { sha256Digest } from "@image-to-ppt/core";
+import { fitTextMetrics, sha256Digest } from "@image-to-ppt/core";
 
 const NATIVE_NODE_CAPABILITY = {
   group: "group",
@@ -13,7 +13,7 @@ const NATIVE_NODE_CAPABILITY = {
   "table-cell": "table",
   list: "list",
   "list-item": "list",
-  chart: "chart",
+  chart: "chart-primitive-lowering",
   "custom-semantic": "custom-semantic",
 };
 
@@ -35,15 +35,16 @@ export const defaultPptxTargetProfile = Object.freeze({
   ],
   ooxmlPostprocessCapabilities: [
     "rich-text-run-metrics", "positioned-cluster-text", "outer-shadow", "glow", "reflection",
+    "connector-arrow",
   ],
   primitiveLoweringCapabilities: [
-    "icon", "table", "list", "chart", "custom-semantic", "per-side-border",
-    "radial-gradient", "connector-custom-path", "alpha-mask",
+    "icon", "table", "list", "chart-primitive-lowering", "custom-semantic", "per-side-border",
+    "radial-gradient", "connector-custom-path", "primitive-rounded-corner", "multi-stroke",
   ],
   approvedRasterCapabilities: ["approved-original-raster"],
   unsupportedCapabilities: [
-    "perspective-transform", "affine-shear", "conic-gradient", "luminance-mask", "inner-shadow", "blur",
-    "soft-edge", "native-table", "native-chart",
+    "perspective-transform", "affine-shear", "conic-gradient", "alpha-mask", "luminance-mask", "inner-shadow", "blur",
+    "soft-edge", "native-table", "native-chart", "blend-mode",
   ],
   limits: {
     maxSlides: 500,
@@ -77,15 +78,23 @@ function requiredCapabilities(node) {
   }
   const sides = new Set(node.effectiveAppearance.strokes.map((stroke) => stroke.side).filter((side) => side !== "all"));
   if (sides.size) required.add("per-side-border");
+  if (node.type === "shape" && node.resolvedContent.cornerRadii) {
+    const radii = Object.values(node.resolvedContent.cornerRadii).map((radius) => `${radius.value}:${radius.unit}`);
+    if (new Set(radii).size > 1) required.add("primitive-rounded-corner");
+  }
+  if (node.effectiveAppearance.strokes.filter((stroke) => stroke.side === "all").length > 1) required.add("multi-stroke");
   node.effectiveAppearance.effects.forEach((effect) => required.add(capabilityForEffect(effect)));
   for (const mask of node.localGeometry.maskStack) required.add(mask.mode === "alpha" ? "alpha-mask" : "luminance-mask");
+  if (node.localGeometry.clipStack.length) required.add("clip-stack");
+  if (node.effectiveAppearance.blendMode !== "normal") required.add("blend-mode");
   if (node.type === "text") {
     required.add(node.resolvedContent.layout.mode === "positioned-clusters" ? "positioned-cluster-text" : "native-flow-text");
-    if (node.resolvedContent.runs.length > 1 || node.resolvedContent.runs.some((run) => run.style.tracking.value !== 0)) required.add("rich-text-run-metrics");
+    if (node.textMetrics || node.resolvedContent.runs.length > 1 || node.resolvedContent.runs.some((run) => run.style.tracking.value !== 0)) required.add("rich-text-run-metrics");
   }
   if (node.type === "connector") {
     if ([node.resolvedContent.start, node.resolvedContent.end].some((endpoint) => endpoint.kind === "node-anchor")) required.add("connector-anchor");
     if (node.resolvedContent.routing === "custom") required.add("connector-custom-path");
+    if (node.effectiveAppearance.strokes.some((stroke) => stroke.startMarker !== "none" || stroke.endMarker !== "none")) required.add("connector-arrow");
   }
   if (node.type === "image" && node.resolvedContent.rasterApproval.status === "approved-original-raster") required.add("approved-original-raster");
   return [...required].filter(Boolean).sort();
@@ -120,7 +129,8 @@ function chooseStrategy(node, capabilities, profile) {
 function nativeKind(node, strategy) {
   if (strategy === "approved-original-raster") return "image";
   if (node.type === "text") return "text";
-  if (node.type === "path" || node.type === "icon") return "path";
+  if (node.type === "path") return "path";
+  if (node.type === "icon") return "group";
   if (node.type === "connector") return "connector";
   if (node.type === "image") return "image";
   if (node.type === "table") return "table";
@@ -157,8 +167,14 @@ function ooxmlFeatures(node, strategy) {
   if (node.type === "text") features.push("native-text", "rich-text-runs");
   if (node.type === "shape") features.push("native-shape");
   if (node.type === "path" || node.type === "icon") features.push("custom-geometry");
-  if (node.type === "image") features.push("picture-crop");
-  if (node.type === "connector") features.push("connector-binding");
+  if (node.type === "image") {
+    features.push("picture-crop");
+    if (node.effectiveAppearance.opacity < 1) features.push("picture-opacity");
+  }
+  if (node.type === "connector") {
+    features.push("connector-binding");
+    if (node.effectiveAppearance.strokes.some((stroke) => stroke.startMarker !== "none" || stroke.endMarker !== "none")) features.push("connector-arrows");
+  }
   if (["group", "list", "list-item", "custom-semantic"].includes(node.type)) features.push("grouping");
   if (strategy === "ooxml-postprocess" && node.type === "text") features.push("manual-text-metrics");
   if (node.localGeometry.maskStack.some((mask) => mask.mode === "alpha")) features.push("alpha-mask");
@@ -166,9 +182,10 @@ function ooxmlFeatures(node, strategy) {
   return [...new Set(features)].sort();
 }
 
-function expectedObjects(node, pageId, strategy) {
+function expectedObjects(node, pageId, strategy, parentNode) {
   if (strategy === "rejected") return [];
-  const virtual = ["group", "list", "list-item", "custom-semantic", "table-row", "table", "chart"].includes(node.type);
+  const mergedTableFollower = node.type === "table-cell" && Boolean(node.resolvedContent.mergeMasterRef);
+  const virtual = mergedTableFollower || ["group", "icon", "list", "list-item", "custom-semantic", "table-row", "table", "chart"].includes(node.type);
   const base = {
     slideId: pageId,
     bbox: objectFrame(node),
@@ -179,7 +196,7 @@ function expectedObjects(node, pageId, strategy) {
   const objects = [{
     objectRef: `object-${node.sceneNodeId}-primary`,
     nativeKind: nativeKind(node, strategy),
-    role: "primary",
+    role: parentNode?.type === "chart" ? "chart-primitive" : "primary",
     virtual,
     ...base,
   }];
@@ -197,8 +214,135 @@ function expectedObjects(node, pageId, strategy) {
         });
       }
     }
+    node.effectiveAppearance.strokes
+      .filter((stroke) => stroke.side === "all")
+      .slice(1)
+      .forEach((stroke, index) => {
+        objects.push({
+          objectRef: `object-${node.sceneNodeId}-stroke-${index + 1}`,
+          nativeKind: "shape",
+          role: "stroke-primitive",
+          virtual: false,
+          ...base,
+          editableAspects: ["geometry", "appearance"],
+          expectedOoxmlFeatures: ["native-shape"],
+        });
+      });
   }
   return objects;
+}
+
+function loweringStrategies(node, strategy) {
+  const strategies = [];
+  if (node.type === "chart" && strategy === "lower-to-primitives") strategies.push({
+    strategyId: `lower-${node.sceneNodeId}-chart-primitives`,
+    kind: "primitive-split",
+    editable: true,
+    allowedLosses: [],
+    verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+  });
+  if (node.type === "table" && strategy === "lower-to-primitives") strategies.push({
+    strategyId: `lower-${node.sceneNodeId}-table-grid`,
+    kind: "primitive-split",
+    editable: true,
+    allowedLosses: [],
+    verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+  });
+  if (node.type === "icon" && strategy === "lower-to-primitives") strategies.push({
+    strategyId: `lower-${node.sceneNodeId}-icon-outline`,
+    kind: "primitive-split",
+    editable: true,
+    allowedLosses: [],
+    verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+  });
+  const arrowStroke = node.effectiveAppearance.strokes.find((stroke) => stroke.startMarker !== "none" || stroke.endMarker !== "none");
+  if (node.type === "connector" && strategy !== "rejected" && arrowStroke) strategies.push({
+    strategyId: `postprocess-${node.sceneNodeId}-connector-arrows`,
+    kind: "ooxml-postprocess",
+    editable: true,
+    ooxmlPostprocess: {
+      feature: "connector-arrow",
+      parameters: {
+        startMarker: arrowStroke.startMarker,
+        endMarker: arrowStroke.endMarker,
+      },
+    },
+    allowedLosses: [],
+    verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+  });
+  if (node.type === "image" && node.effectiveAppearance.opacity < 1) strategies.push({
+    strategyId: `postprocess-${node.sceneNodeId}-picture-opacity`,
+    kind: "ooxml-postprocess",
+    editable: true,
+    ooxmlPostprocess: {
+      feature: "opacity",
+      parameters: { opacity: node.effectiveAppearance.opacity },
+    },
+    allowedLosses: [],
+    verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+  });
+  if (strategy === "ooxml-postprocess") {
+    for (const effect of node.effectiveAppearance.effects) {
+      if (effect.kind !== "outer-shadow" && effect.kind !== "glow") continue;
+      strategies.push({
+        strategyId: `postprocess-${node.sceneNodeId}-${effect.kind}`,
+        kind: "ooxml-postprocess",
+        editable: true,
+        ooxmlPostprocess: {
+          feature: effect.kind === "outer-shadow" ? "shadow" : "glow",
+          parameters: structuredClone(effect),
+        },
+        allowedLosses: [],
+        verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+      });
+    }
+  }
+  const radialGradients = node.effectiveAppearance.fills.filter((fill) => fill.kind === "gradient" && fill.gradient.type === "radial");
+  if (radialGradients.length && strategy === "lower-to-primitives") strategies.push({
+    strategyId: `lower-${node.sceneNodeId}-radial-gradient`,
+    kind: "primitive-approximation",
+    editable: true,
+    approximationErrorBound: {
+      name: "radial-gradient-path-error",
+      value: 0.02,
+      unit: "score",
+      threshold: 0.02,
+      direction: "lower-is-better",
+    },
+    allowedLosses: [],
+    verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+  });
+  if (strategy !== "lower-to-primitives") return strategies.length ? strategies : undefined;
+  const hasAsymmetricCorners = node.type === "shape" && node.resolvedContent.cornerRadii
+    && new Set(Object.values(node.resolvedContent.cornerRadii).map((radius) => `${radius.value}:${radius.unit}`)).size > 1;
+  if (hasAsymmetricCorners) strategies.push({
+    strategyId: `lower-${node.sceneNodeId}-asymmetric-corners`,
+    kind: "primitive-approximation",
+    editable: true,
+    allowedLosses: [{
+      code: "asymmetric-corner-radius-approximation",
+      category: "visual",
+      description: "PPTX 使用最小圆角近似非对称圆角。",
+      approved: false,
+      affectedAspects: ["appearance", "geometry"],
+    }],
+    verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+  });
+  if (node.effectiveAppearance.strokes.filter((stroke) => stroke.side === "all").length > 1) strategies.push({
+    strategyId: `lower-${node.sceneNodeId}-multi-stroke`,
+    kind: "primitive-split",
+    editable: true,
+    allowedLosses: [],
+    verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+  });
+  if (node.effectiveAppearance.strokes.some((stroke) => stroke.side !== "all")) strategies.push({
+    strategyId: `lower-${node.sceneNodeId}-per-side-border`,
+    kind: "primitive-split",
+    editable: true,
+    allowedLosses: [],
+    verificationResponsibilities: ["visual", "editability", "object-mapping", "component-diagnostic"],
+  });
+  return strategies.length ? strategies : undefined;
 }
 
 function verificationActions(editability) {
@@ -249,12 +393,21 @@ export function generateBackendPlan(resolvedScene, targetProfile = defaultPptxTa
   let totalPathCommands = 0;
   for (const page of resolvedScene.pages) {
     if (page.nodes.length > targetProfile.limits.maxObjectsPerSlide) throw new Error(`页面 ${page.pageId} 节点数超过 Target Profile 限制`);
+    const nodesBySceneNodeId = new Map(page.nodes.map((node) => [node.sceneNodeId, node]));
     for (const node of page.nodes) {
       const pathCommands = pathCommandCount(node);
       totalPathCommands += pathCommands;
       const capabilities = requiredCapabilities(node);
+      const textFitting = node.type === "text"
+        ? fitTextMetrics({
+          resolvedContent: node.resolvedContent,
+          textMetrics: node.textMetrics,
+          fitConstraints: node.fitConstraints,
+        })
+        : undefined;
       let decision = chooseStrategy(node, capabilities, targetProfile);
       if (pathCommands > targetProfile.limits.maxPathCommandsPerObject) decision = { strategy: "rejected", unsupported: ["path"] };
+      const plannedLoweringStrategies = loweringStrategies(node, decision.strategy);
       const operation = {
         operationId: `operation-${node.sceneNodeId}`,
         sceneNodeRef: node.sceneNodeId,
@@ -274,13 +427,16 @@ export function generateBackendPlan(resolvedScene, targetProfile = defaultPptxTa
           evidenceRefs: node.evidenceClosure.allEvidenceRefs,
         },
         resourceRefs: node.resourceRefs,
-        expectedObjects: expectedObjects(node, page.pageId, decision.strategy),
+        expectedObjects: expectedObjects(node, page.pageId, decision.strategy, nodesBySceneNodeId.get(node.parentSceneNodeRef)),
         editabilityContract: {
           required: node.effectiveEditability.required,
           requiredAspects: node.effectiveEditability.requiredAspects,
           verificationActions: verificationActions(node.effectiveEditability),
         },
         declaredLosses: [],
+        ...(plannedLoweringStrategies ? { loweringStrategies: plannedLoweringStrategies } : {}),
+        ...(textFitting ? { textFitting } : {}),
+        ...(node.patchProvenance?.length ? { patchProvenance: structuredClone(node.patchProvenance) } : {}),
         ...(decision.strategy === "rejected" ? {
           rejectionReason: {
             code: pathCommands > targetProfile.limits.maxPathCommandsPerObject ? "path-limit-exceeded" : "unsupported-capability",

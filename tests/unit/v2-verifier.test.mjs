@@ -8,7 +8,7 @@ import sharp from "sharp";
 import { unzipSync, zipSync } from "fflate";
 import { validateV2Contracts } from "@image-to-ppt/core";
 import { FileBlob, PresentationFile, renderPptxFromBackendPlan } from "@image-to-ppt/renderer-pptx";
-import { normalizeSource, verifyV2Candidate } from "@image-to-ppt/cli";
+import { compareVisuals, normalizeSource, verifyV2Candidate } from "@image-to-ppt/cli";
 
 const singleFixtureUrl = new URL("../../packages/core/examples/v2/minimal-single-page.json", import.meta.url);
 const multiFixtureUrl = new URL("../../packages/core/examples/v2/minimal-multi-page.json", import.meta.url);
@@ -99,6 +99,7 @@ test("V2 verifier 生成通过状态 Verification Result 并写入报告", async
       canonicalPixelPaths: candidate.canonicalPixelPaths,
       renderedPagePaths: candidate.renderedPagePaths,
       visualThresholds: zeroThresholds,
+      allowLoweredThresholds: true,
       reportPath
     });
 
@@ -107,13 +108,50 @@ test("V2 verifier 生成通过状态 Verification Result 并写入报告", async
     assert.equal(verification.objectManifestRef, candidate.objectManifest.manifestId);
     assert.equal(verification.sourceResults[0].status, "passed");
     assert.equal(verification.pageResults[0].status, "passed");
+    const titleComponent = verification.componentResults.find((item) => item.componentRef === "component-scene-node-title");
+    assert.equal(verification.componentResults.some((item) => item.componentRef === "component-page-page-1" && item.componentType === "page"), true);
+    assert.equal(titleComponent.status, "passed");
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "pixel-similarity" && metric.threshold === 0), true);
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "character-box-width-error" && metric.value === 0 && metric.threshold === 0), true);
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "baseline-shift-error" && metric.value === 0 && metric.threshold === 0.5), true);
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "text-ink-edge-similarity" && metric.threshold === 0), true);
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "font-size-error" && metric.value === 0), true);
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "tracking-error" && metric.value === 0), true);
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "line-height-error" && metric.value === 0), true);
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "expected-object-count-error" && metric.value === 0), true);
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "object-hierarchy-error" && metric.value === 0), true);
+    assert.equal(titleComponent.metrics.some((metric) => metric.name === "primary-object-missing" && metric.value === 0), true);
+    assert.deepEqual(titleComponent.responsibility.sceneNodeRefs, ["scene-node-title"]);
+    assert.equal(titleComponent.responsibility.operationRefs.includes("operation-scene-node-title"), true);
+    assert.equal(titleComponent.responsibility.objectRefs.includes("object-scene-node-title-primary"), true);
     assert.equal(verification.objectResults.some((item) => item.status === "passed"), true);
     assert.equal(verification.editabilityResults.some((item) => item.status === "passed"), true);
     assert.equal(verification.packageSecurity.status, "passed");
+    assert.equal(verification.antiCheatResults.every((item) => item.status === "passed"), true);
     assert.equal(validateV2Contracts({ schemaVersion: 2, contracts: [candidate.sourcePackage, candidate.contracts["reconstruction-spec"], candidate.contracts["evidence-graph"], candidate.contracts["resolved-scene"], candidate.contracts["backend-plan"], candidate.objectManifest, verification] }).ok, true);
     assert.deepEqual(JSON.parse(await fsp.readFile(reportPath, "utf8")), verification);
   } finally {
     await fsp.rm(candidate.directory, { recursive: true, force: true });
+  }
+});
+
+test("visual diff 为局部颜色比较输出 Delta E", async () => {
+  const directory = await fsp.mkdtemp(path.join(os.tmpdir(), "img2ppt-visual-delta-e-"));
+  try {
+    const sourcePath = path.join(directory, "source.png");
+    const renderedPath = path.join(directory, "rendered.png");
+    await sharp({ create: { width: 8, height: 8, channels: 4, background: "#ffffff" } }).png().toFile(sourcePath);
+    await sharp({ create: { width: 8, height: 8, channels: 4, background: "#ff0000" } }).png().toFile(renderedPath);
+    const visual = await compareVisuals({
+      sourcePath,
+      renderedPath,
+      regions: [{ regionId: "color-region", category: "color", bbox: { x: 0, y: 0, width: 8, height: 8 } }],
+      thresholds: { global: { pixel: 0, edge: 0 }, color: { pixel: 0, edge: 0 } },
+    });
+    assert.equal(visual.global.meanColorDeltaE > 0, true);
+    assert.equal(visual.regions[0].meanColorDeltaE > 0, true);
+  } finally {
+    await fsp.rm(directory, { recursive: true, force: true });
   }
 });
 
@@ -139,7 +177,8 @@ test("V2 verifier 缺少第二页预览时失败并指出 page-2", async () => {
       rawBlobPaths: candidate.rawBlobPaths,
       canonicalPixelPaths: candidate.canonicalPixelPaths,
       renderedPagePaths: candidate.renderedPagePaths,
-      visualThresholds: zeroThresholds
+      visualThresholds: zeroThresholds,
+      allowLoweredThresholds: true
     });
 
     assert.equal(verification.status, "failed-quality-gate");
@@ -173,13 +212,61 @@ test("V2 verifier 检出 PPTX 外部关系和输出摘要不匹配", async () =>
       rawBlobPaths: candidate.rawBlobPaths,
       canonicalPixelPaths: candidate.canonicalPixelPaths,
       renderedPagePaths: candidate.renderedPagePaths,
-      visualThresholds: zeroThresholds
+      visualThresholds: zeroThresholds,
+      allowLoweredThresholds: true
     });
 
     assert.equal(verification.status, "failed-quality-gate");
     assert.equal(verification.packageSecurity.status, "failed");
     assert.equal(verification.failures.some((item) => item.code === "external-relationship-present"), true);
     assert.equal(verification.failures.some((item) => item.code === "output-digest-mismatch"), true);
+  } finally {
+    await fsp.rm(candidate.directory, { recursive: true, force: true });
+  }
+});
+
+test("V2 verifier 拒绝未明确允许的视觉阈值放宽", async () => {
+  const candidate = await buildCandidate();
+  try {
+    const verification = await verifyV2Candidate({
+      sourcePackages: [candidate.sourcePackage],
+      reconstructionSpec: candidate.contracts["reconstruction-spec"],
+      evidenceGraph: candidate.contracts["evidence-graph"],
+      resolvedScene: candidate.contracts["resolved-scene"],
+      backendPlan: candidate.contracts["backend-plan"],
+      objectManifest: candidate.objectManifest,
+      pptxPath: candidate.pptxPath,
+      rawBlobPaths: candidate.rawBlobPaths,
+      canonicalPixelPaths: candidate.canonicalPixelPaths,
+      renderedPagePaths: candidate.renderedPagePaths,
+      visualThresholds: zeroThresholds,
+    });
+    assert.equal(verification.status, "failed-quality-gate");
+    assert.equal(verification.antiCheatResults.some((item) => item.check === "threshold-lowered" && item.status === "failed"), true);
+  } finally {
+    await fsp.rm(candidate.directory, { recursive: true, force: true });
+  }
+});
+
+test("V2 verifier 将尺寸不一致的预览标为裁剪失败区域", async () => {
+  const candidate = await buildCandidate();
+  try {
+    await writeBlankPng(candidate.renderedPagePaths["page-1"], 80, 45);
+    const verification = await verifyV2Candidate({
+      sourcePackages: [candidate.sourcePackage],
+      reconstructionSpec: candidate.contracts["reconstruction-spec"],
+      evidenceGraph: candidate.contracts["evidence-graph"],
+      resolvedScene: candidate.contracts["resolved-scene"],
+      backendPlan: candidate.contracts["backend-plan"],
+      objectManifest: candidate.objectManifest,
+      pptxPath: candidate.pptxPath,
+      rawBlobPaths: candidate.rawBlobPaths,
+      canonicalPixelPaths: candidate.canonicalPixelPaths,
+      renderedPagePaths: candidate.renderedPagePaths,
+      visualThresholds: zeroThresholds,
+      allowLoweredThresholds: true,
+    });
+    assert.equal(verification.antiCheatResults.some((item) => item.check === "cropped-failure-region" && item.status === "failed"), true);
   } finally {
     await fsp.rm(candidate.directory, { recursive: true, force: true });
   }

@@ -100,3 +100,17 @@ Evidence 不能包含 passed、proved 或 success。一个覆盖很大的 source
 - 禁止伪造图表数据或语义。
 - 禁止让 custom-semantic 承载不可见的后端指令。
 - 禁止让 Renderer 读取作者契约后自行猜测降级。
+
+## 11. 拟合约束、样式令牌与结构候选
+
+文字、几何、颜色、效果和结构节点允许声明 `fitConstraints`，但每个可调字段必须给出单位、最小值、最大值、默认值、Evidence 引用和 editability 限制。`lockedFields` 优先于所有优化 patch；作者未授权的字段不得被优化器修改。
+
+跨页一致样式必须以 `styleTokens` 表达，保存解析值、来源 Evidence、适用节点与允许偏差。局部 Evidence 与 token 冲突时，作者应明确局部 override 或收紧 token 适用范围，不能让运行时静默取平均值。
+
+表格、图表、流程图、连接线、图标轮廓和复杂路径可通过 `structureCandidates` 表达。候选必须分别标明已证明的可编辑语义、未知字段、可见 primitive、来源 Evidence 与 fallback 限制。图表数据没有直接 Evidence 时仍为 `unknown`，不得因为视觉拟合成功而升级为已知数据。
+
+## 12. Evidence 质量
+
+文字 Evidence 应包含 token、字符或字素框、baseline、字体候选、字距、行距和对应文本节点。结构 Evidence 应包含表格网格、连接端点、路径控制点或图表 primitive；外观 Evidence 应包含局部颜色、透明度、渐变、阴影采样和适用 bounds。
+
+每条 Evidence 都应避免覆盖无关组件的过宽区域，并声明 measurement unit、容忍度、置信度和生成方法。低置信度、冲突或缺失关键测量必须保留为诊断，不能被默认值或 OCR 结果静默替代。

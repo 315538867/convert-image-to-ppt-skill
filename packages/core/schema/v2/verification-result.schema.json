@@ -44,6 +44,10 @@
     "objectResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
     "protectedRegionResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
     "editabilityResults": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "componentResults": { "type": "array", "items": { "$ref": "#/$defs/componentResult" } },
+    "optimizationHistory": { "type": "array", "items": { "$ref": "#/$defs/optimizationIteration" } },
+    "goldenCorpusResults": { "type": "array", "items": { "$ref": "#/$defs/corpusResult" } },
+    "antiCheatResults": { "type": "array", "items": { "$ref": "#/$defs/antiCheatResult" } },
     "packageSecurity": { "$ref": "#/$defs/result" },
     "summary": {
       "type": "object",
@@ -68,8 +72,112 @@
       "properties": {
         "subjectRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
         "status": { "enum": ["passed", "failed", "skipped"] },
-        "gate": { "enum": ["source", "visual", "evidence", "scene", "operation", "object", "protected-region", "editability", "package-security"] },
+        "gate": { "enum": ["source", "visual", "evidence", "scene", "operation", "object", "protected-region", "editability", "package-security", "component", "golden-corpus", "anti-cheat", "optimization"] },
         "metrics": { "type": "object" },
+        "message": { "type": "string" },
+        "details": { "type": "object" }
+      }
+    },
+    "componentResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["componentRef", "componentType", "status", "metrics", "responsibility"],
+      "properties": {
+        "componentRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "componentType": { "enum": ["group", "text", "shape", "image", "icon", "table", "table-row", "table-cell", "list", "list-item", "chart", "connector", "path", "custom-semantic", "effect", "page"] },
+        "status": { "enum": ["passed", "failed", "skipped"] },
+        "metrics": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/metricValue" } },
+        "failureRegions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pageId", "box", "category"],
+            "properties": {
+              "pageId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+              "box": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" },
+              "category": { "enum": ["pixel", "edge", "text-metrics", "color", "alpha", "gradient", "shadow", "geometry", "structure", "editability"] },
+              "cropDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" }
+            }
+          }
+        },
+        "responsibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["evidenceRefs", "sceneNodeRefs", "operationRefs", "objectRefs"],
+          "properties": {
+            "evidenceRefs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
+            "sceneNodeRefs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
+            "operationRefs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
+            "objectRefs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } }
+          }
+        },
+        "suggestedPatches": { "type": "array", "items": { "$ref": "#/$defs/suggestedPatch" } }
+      }
+    },
+    "suggestedPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["patchKind", "targetRef", "parameterPath", "direction", "confidence"],
+      "properties": {
+        "patchKind": { "enum": ["text-fitting", "geometry", "color", "effect", "structure", "lowering"] },
+        "targetRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "parameterPath": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/jsonPointer" },
+        "direction": { "enum": ["increase", "decrease", "replace", "snap", "split", "reject"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "expectedMetricImpact": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/metricValue" } }
+      }
+    },
+    "optimizationIteration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["iteration", "inputDigest", "candidates", "appliedPatchRefs", "status", "stopReason"],
+      "properties": {
+        "iteration": { "type": "integer", "minimum": 0 },
+        "inputDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["candidateId", "rank", "status", "metricsBefore", "metricsAfter"],
+            "properties": {
+              "candidateId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+              "rank": { "type": "integer", "minimum": 0 },
+              "status": { "enum": ["proposed", "applied", "rejected", "superseded", "reverted"] },
+              "rejectionReason": { "enum": ["invalid-patch", "component-regression", "editability-regression", "anti-cheat", "ineffective-patch", "capability-conflict", "superseded"] },
+              "metricsBefore": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/metricValue" } },
+              "metricsAfter": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/metricValue" } }
+            }
+          }
+        },
+        "appliedPatchRefs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
+        "status": { "enum": ["passed", "failed", "reverted", "exhausted"] },
+        "stopReason": { "enum": ["successful-iteration", "component-regression", "exhausted-iteration-budget", "no-effective-candidates", "invalid-patch", "anti-cheat", "not-stopped"] },
+        "verificationResultRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+      }
+    },
+    "corpusResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sampleId", "sampleKind", "independentReference", "status", "metrics"],
+      "properties": {
+        "sampleId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "sampleKind": { "enum": ["text", "table", "flowchart", "chart", "transparent", "gradient", "shadow", "multi-page", "low-clarity"] },
+        "independentReference": { "type": "boolean" },
+        "status": { "enum": ["passed", "failed", "skipped"] },
+        "metrics": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/metricValue" } },
+        "failureCode": { "enum": ["corpus-failure", "renderer-generated-only", "missing-reference", "threshold-failed"] }
+      }
+    },
+    "antiCheatResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check", "status"],
+      "properties": {
+        "check": { "enum": ["threshold-lowered", "hidden-source-detail", "cropped-failure-region", "whole-page-raster", "text-raster", "undeclared-raster-fallback", "deleted-object", "source-fact-modified", "editability-regression"] },
+        "status": { "enum": ["passed", "failed", "skipped"] },
+        "subjectRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
         "message": { "type": "string" },
         "details": { "type": "object" }
       }
@@ -79,7 +187,7 @@
       "additionalProperties": false,
       "required": ["category", "code", "message"],
       "properties": {
-        "category": { "enum": ["source-normalization", "reconstruction", "evidence", "scene-compiler", "backend-planner", "renderer", "visual-verifier", "object-verifier", "editability", "package-security", "publisher"] },
+        "category": { "enum": ["source-normalization", "reconstruction", "evidence", "scene-compiler", "backend-planner", "renderer", "visual-verifier", "object-verifier", "editability", "package-security", "publisher", "component-diagnostic", "golden-corpus", "anti-cheat", "optimizer"] },
         "subjectRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
         "code": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
         "message": { "type": "string", "minLength": 1 },

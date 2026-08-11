@@ -38,8 +38,9 @@ description: 使用 V2 源图事实与作者契约，将演示文稿截图、导
 8. 为所有显著事实建立 Evidence。大范围区域不能替代具体测量；每条 Evidence 必须有类型化 measurement、明确 subjects、一个或多个 sourceRegions、容差、来源和置信度。
 9. 运行 V2 契约校验。Schema 或跨契约引用失败时，只修正作者数据；不得写入运行状态绕过校验。
 10. 将 Source Package、Reconstruction Spec 和 Evidence Graph 交给 V2 流水线。Core、Backend Planner、Renderer、Verifier 和 Publisher 生成其余契约与产物。
-11. 根据 Verification Result 修正对应责任层。若大量同类对象失败、报告与 OOXML 对象矛盾，或编译器丢字段，应修运行时，不得扭曲源图事实。
-12. 只有 Delivery Manifest 发布成功后才能交付，并且必须实际查看逐页 preview、diff、source overlay 和 review sheet。
+11. 根据 Verification Result 修正对应责任层。若运行时启用 Fidelity Optimizer，它只能以独立 runtime patch 在作者声明的可调范围内迭代；不得回写作者契约、源图事实或质量阈值。
+12. 优化每轮必须保留候选、应用 patch、组件指标变化、回退原因和停止原因。标题、文字、表格、连接线或对象映射退化时，即使全局分数提高也不得视为成功。
+13. 只有所有组件级视觉门、editability、Object Manifest、package safety 和独立 golden corpus 门通过，且 Delivery Manifest 发布成功后才能交付；并且必须实际查看逐页 preview、diff、source overlay 和 review sheet。
 
 ## 作者输出
 
@@ -74,12 +75,14 @@ node packages/core/src/validate-v2-contracts.mjs authoring-contracts.json
 
 任何页面、Evidence、Scene Node、Backend Plan operation、原生对象、编辑性或包安全门槛失败，都不能生成成功 Delivery Manifest。
 
+独立 golden corpus 的快速检查由 `npm run test:golden-corpus` 执行；全量输入检查使用 `npm run test:golden-corpus:full`。renderer 自举样例只能用于 smoke，不可作为真实图片还原能力的成功证明。
+
 ## 技能验证
 
 修改 Schema、Core、Renderer、CLI 或 Skill 模板后，在项目根执行：
 
 ```bash
-openspec validate redesign-image-to-ppt-v2-architecture --strict
+openspec validate enhance-image-restoration-fidelity --strict
 npm test
 npm run audit
 ```

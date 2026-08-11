@@ -52,6 +52,82 @@
         "nonOpaquePixelCount": { "type": "integer", "minimum": 0 }
       }
     },
-    "derivedBlobs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/blobRef" } }
+    "derivedBlobs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/blobRef" } },
+    "analysisDerivatives": { "type": "array", "items": { "$ref": "#/$defs/analysisDerivative" } },
+    "localizedAssets": { "type": "array", "items": { "$ref": "#/$defs/localizedAsset" } }
+  },
+  "$defs": {
+    "sourceRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pageId", "box"],
+      "properties": {
+        "pageId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "box": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/box" }
+      }
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "parametersDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" }
+      }
+    },
+    "analysisDerivative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["derivativeId", "kind", "sourcePageRef", "canonicalPixelDigest", "sourceRegions", "generator", "contentDigest", "hypothesis", "blobRefs"],
+      "properties": {
+        "derivativeId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "kind": {
+          "enum": [
+            "ocr-tokens",
+            "text-ink-mask",
+            "baseline-candidates",
+            "edge-map",
+            "connected-components",
+            "contours",
+            "color-samples",
+            "gradient-samples",
+            "alpha-estimates",
+            "shadow-candidates",
+            "table-grid-candidates",
+            "chart-primitive-candidates",
+            "vectorization-candidates",
+            "localized-crops"
+          ]
+        },
+        "sourcePageRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "canonicalPixelDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" },
+        "sourceRegions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/sourceRegion" } },
+        "generator": { "$ref": "#/$defs/generator" },
+        "contentDigest": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" },
+        "hypothesis": { "type": "boolean" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "blobRefs": {
+          "type": "array",
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" }
+        },
+        "metadata": { "type": "object" }
+      }
+    },
+    "localizedAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetId", "purpose", "sourcePageRef", "sourceRegion", "blobRef", "parentDerivativeRef"],
+      "properties": {
+        "assetId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "purpose": { "enum": ["review-crop", "failure-crop", "edge-crop", "mask-crop", "color-sample-crop", "optimization-tile"] },
+        "sourcePageRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "sourceRegion": { "$ref": "#/$defs/sourceRegion" },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "colorHandling": { "enum": ["canonical", "flattened-alpha", "edge-only", "mask-only", "debug-overlay"] },
+        "blobRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/digest" },
+        "parentDerivativeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+      }
+    }
   }
 }

@@ -11,6 +11,19 @@ import { readCanonicalPixels } from "./source-normalizer.mjs";
 
 const PPTX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
 const REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships";
+const MINIMUM_VISUAL_THRESHOLDS = {
+  global: { pixel: 0.96, edge: 0.88 },
+  text: { pixel: 0.94, edge: 0.88 },
+  "table-text": { pixel: 0.94, edge: 0.88 },
+  "simple-icon": { pixel: 0.95, edge: 0.9 },
+  border: { pixel: 0, edge: 0.92 },
+  connector: { pixel: 0.95, edge: 0.92 },
+  shape: { pixel: 0.97, edge: 0.92 },
+  image: { pixel: 0.97, edge: 0.9 },
+  spacing: { pixel: 0.98, edge: 0.92 },
+  color: { pixel: 0.985, edge: 0 },
+  generic: { pixel: 0.94, edge: 0.86 },
+};
 
 function lookup(mapping, keys) {
   for (const key of keys.filter(Boolean)) {
@@ -58,6 +71,43 @@ function sourcePageIds(sourcePackages) {
   return sourcePackages.flatMap((sourcePackage) => sourcePackage.pages.map((page) => page.pageId));
 }
 
+function pageCanvas(sourcePackages, pageId) {
+  return pageSourcePackage(sourcePackages, pageId)?.pages.find((page) => page.pageId === pageId)?.canvas;
+}
+
+function boxCoverage(box, canvas) {
+  if (!box || !canvas || canvas.width <= 0 || canvas.height <= 0) return 0;
+  return Math.max(0, Math.min(box.width * box.height, canvas.width * canvas.height)) / (canvas.width * canvas.height);
+}
+
+function antiCheatResult(check, status, options = {}) {
+  return {
+    check,
+    status,
+    ...(options.subjectRef ? { subjectRef: options.subjectRef } : {}),
+    ...(options.message ? { message: options.message } : {}),
+    ...(options.details ? { details: options.details } : {}),
+  };
+}
+
+function antiCheatFailure(result) {
+  return failure("anti-cheat", result.check, result.message ?? `检测到 ${result.check}`, result.subjectRef, result.details);
+}
+
+function loweredThresholds(visualThresholds) {
+  const lowered = [];
+  for (const [category, values] of Object.entries(visualThresholds ?? {})) {
+    const minimum = MINIMUM_VISUAL_THRESHOLDS[category];
+    if (!minimum) continue;
+    for (const metric of ["pixel", "edge"]) {
+      if (typeof values?.[metric] === "number" && values[metric] < minimum[metric]) {
+        lowered.push({ category, metric, requested: values[metric], minimum: minimum[metric] });
+      }
+    }
+  }
+  return lowered;
+}
+
 function evidenceCategory(evidence) {
   const kind = evidence.measurement?.kind ?? evidence.kind;
   if (kind === "text-content" || kind === "text-ink") return "text";
@@ -75,6 +125,317 @@ function nodeCategory(node) {
   if (node.type === "path" || node.type === "icon") return "simple-icon";
   if (["shape", "table-cell", "chart"].includes(node.type)) return "shape";
   return "generic";
+}
+
+function componentType(node) {
+  return node.type === "custom-semantic" ? "custom-semantic" : node.type;
+}
+
+function visualMetric(name, value, threshold) {
+  return {
+    name,
+    value,
+    unit: "score",
+    ...(threshold === undefined ? {} : { threshold }),
+    direction: "higher-is-better",
+  };
+}
+
+function lowerIsBetterMetric(name, value, unit, threshold) {
+  return {
+    name,
+    value,
+    unit,
+    ...(threshold === undefined ? {} : { threshold }),
+    direction: "lower-is-better",
+  };
+}
+
+function componentMetrics(metrics) {
+  if (!metrics) return [];
+  return [
+    visualMetric("pixel-similarity", metrics.pixelSimilarity, metrics.pixelThreshold),
+    visualMetric("edge-similarity", metrics.edgeSimilarity, metrics.edgeThreshold),
+  ];
+}
+
+function metricDelta(name, actual, expected, threshold, unit = "px") {
+  return {
+    name,
+    value: Math.abs((actual ?? 0) - (expected ?? 0)),
+    unit,
+    ...(threshold === undefined ? {} : { threshold }),
+    direction: "lower-is-better",
+  };
+}
+
+function textComponentMetrics({ node, operations, regionMetrics }) {
+  const operation = operations.find((item) => item.parameters.nodeType === "text");
+  const content = node.resolvedContent;
+  const firstRun = content.runs?.[0];
+  const firstParagraph = content.paragraphs?.[0];
+  const fitting = operation?.textFitting;
+  if (!operation || !firstRun || !firstParagraph) return componentMetrics(regionMetrics);
+  const plannedContentBox = operation.parameters.worldBounds?.content;
+  const expectedContentBox = node.worldBounds.content;
+  const plannedFont = fitting?.fontFamilies?.[0] ?? firstRun.style.fontFamilies[0];
+  const expectedFont = firstRun.style.fontFamilies[0];
+  const plannedFontSize = fitting?.fontSize?.value ?? firstRun.style.fontSize.value;
+  const plannedTracking = fitting?.tracking?.value ?? firstRun.style.tracking.value;
+  const plannedBaselineShift = fitting?.baselineShift?.value ?? firstRun.style.baselineShift.value;
+  const expectedLineHeight = firstParagraph.lineSpacing.mode === "exact"
+    ? firstParagraph.lineSpacing.value
+    : firstParagraph.lineSpacing.value * firstRun.style.fontSize.value;
+  const plannedLineHeight = fitting?.lineHeight?.value ?? expectedLineHeight;
+  return [
+    ...componentMetrics(regionMetrics),
+    visualMetric("text-ink-pixel-similarity", regionMetrics?.pixelSimilarity ?? 1, regionMetrics?.pixelThreshold),
+    visualMetric("text-ink-edge-similarity", regionMetrics?.edgeSimilarity ?? 1, regionMetrics?.edgeThreshold),
+    metricDelta("character-box-x-error", plannedContentBox?.x, expectedContentBox.x, 0),
+    metricDelta("character-box-y-error", plannedContentBox?.y, expectedContentBox.y, 0),
+    metricDelta("character-box-width-error", plannedContentBox?.width, expectedContentBox.width, 0),
+    metricDelta("character-box-height-error", plannedContentBox?.height, expectedContentBox.height, 0),
+    metricDelta("baseline-shift-error", plannedBaselineShift, firstRun.style.baselineShift.value, 0.5),
+    metricDelta("font-family-mismatch", plannedFont === expectedFont ? 0 : 1, 0, 0, "count"),
+    metricDelta("font-size-error", plannedFontSize, firstRun.style.fontSize.value, 0.5),
+    metricDelta("tracking-error", plannedTracking, firstRun.style.tracking.value, 0.25),
+    metricDelta("line-height-error", plannedLineHeight, expectedLineHeight, 0.5),
+  ];
+}
+
+function lengthValue(value) {
+  return value?.value ?? 0;
+}
+
+function shapeComponentMetrics({ node, operations, objects, regionMetrics }) {
+  const operation = operations[0];
+  if (!operation) return componentMetrics(regionMetrics);
+  const plannedAppearance = operation.parameters.appearance ?? {};
+  const sceneAppearance = node.effectiveAppearance ?? {};
+  const plannedContent = operation.parameters.content ?? {};
+  const sceneContent = node.resolvedContent ?? {};
+  const plannedRadii = Object.values(plannedContent.cornerRadii ?? {});
+  const sceneRadii = Object.values(sceneContent.cornerRadii ?? {});
+  const radiusError = plannedRadii.reduce((sum, radius, index) => sum + Math.abs(lengthValue(radius) - lengthValue(sceneRadii[index])), 0);
+  const declaredFeatures = new Set(objects.flatMap((object) => object.actualOoxmlFeatures));
+  return [
+    ...componentMetrics(regionMetrics),
+    lowerIsBetterMetric("color-delta-e", regionMetrics?.meanColorDeltaE ?? 0, "delta-e", regionMetrics?.colorDeltaEThreshold),
+    metricDelta("opacity-error", plannedAppearance.opacity, sceneAppearance.opacity, 0),
+    metricDelta("gradient-stop-count-error", plannedAppearance.fills?.flatMap((fill) => fill.gradient?.stops ?? []).length, sceneAppearance.fills?.flatMap((fill) => fill.gradient?.stops ?? []).length, 0, "count"),
+    metricDelta("stroke-count-error", plannedAppearance.strokes?.length, sceneAppearance.strokes?.length, 0, "count"),
+    metricDelta("corner-radius-error", radiusError, 0, 0),
+    metricDelta("effect-count-error", plannedAppearance.effects?.length, sceneAppearance.effects?.length, 0, "count"),
+    metricDelta("mask-clip-count-error", operation.parameters.localGeometry?.maskStack?.length, node.localGeometry?.maskStack?.length, 0, "count"),
+    metricDelta("effect-feature-missing", sceneAppearance.effects?.length > 0 && !declaredFeatures.has("effect-list") ? 1 : 0, 0, 0, "count"),
+  ];
+}
+
+function pointDistance(left, right) {
+  if (!left || !right || left.kind !== "point" || right.kind !== "point") return 0;
+  return Math.hypot(left.point.x - right.point.x, left.point.y - right.point.y);
+}
+
+function structuralComponentMetrics({ node, operations, objects, operationByNode }) {
+  const operation = operations[0];
+  if (!operation) return [];
+  const expectedObjects = operation.expectedObjects ?? [];
+  const expectedPrimary = expectedObjects.find((item) => item.role === "primary")?.objectRef ?? null;
+  const parentOperation = operation.parentSceneNodeRef ? operationByNode.get(operation.parentSceneNodeRef)?.[0] : undefined;
+  const parentPrimary = parentOperation?.expectedObjects.find((item) => item.role === "primary")?.objectRef ?? null;
+  const content = operation.parameters.content ?? {};
+  const resolvedContent = node.resolvedContent ?? {};
+  const hierarchyMismatch = objects.filter((object) => object.containerObjectRef !== parentPrimary).length;
+  const metrics = [
+    metricDelta("expected-object-count-error", objects.length, expectedObjects.length, 0, "count"),
+    metricDelta("object-hierarchy-error", hierarchyMismatch, 0, 0, "count"),
+    metricDelta("child-node-count-error", operation.childSceneNodeRefs.length, node.childSceneNodeRefs.length, 0, "count"),
+    metricDelta("primary-object-missing", expectedPrimary && !objects.some((object) => object.objectRef === expectedPrimary) ? 1 : 0, 0, 0, "count"),
+  ];
+  if (node.type === "table-cell") {
+    metrics.push(
+      metricDelta("table-row-span-error", content.rowSpan, resolvedContent.rowSpan, 0, "count"),
+      metricDelta("table-column-span-error", content.columnSpan, resolvedContent.columnSpan, 0, "count"),
+      metricDelta("table-merge-master-error", content.mergeMasterRef === resolvedContent.mergeMasterRef ? 0 : 1, 0, 0, "count"),
+    );
+  }
+  if (node.type === "connector") {
+    metrics.push(
+      lowerIsBetterMetric("connector-start-point-error", pointDistance(content.start, resolvedContent.start), "px", 0),
+      lowerIsBetterMetric("connector-end-point-error", pointDistance(content.end, resolvedContent.end), "px", 0),
+      metricDelta("connector-waypoint-count-error", content.waypoints?.length, resolvedContent.waypoints?.length, 0, "count"),
+    );
+  }
+  if (node.type === "path") {
+    metrics.push(metricDelta("path-command-count-error", content.commands?.length, resolvedContent.commands?.length, 0, "count"));
+  }
+  if (node.type === "chart") {
+    metrics.push(
+      metricDelta("chart-primitive-count-error", objects.filter((object) => object.expectedRole === "chart-primitive").length, expectedObjects.filter((object) => object.role === "chart-primitive").length, 0, "count"),
+      metricDelta("chart-series-count-error", content.series?.length, resolvedContent.series?.length, 0, "count"),
+    );
+  }
+  return metrics;
+}
+
+function structuralStatus(metrics) {
+  return metrics.some((metric) => metric.value > (metric.threshold ?? 0)) ? "failed" : "passed";
+}
+
+function componentFailureRegions({ pageId, box, metrics }) {
+  if (!metrics || (metrics.pixelSimilarity >= metrics.pixelThreshold && metrics.edgeSimilarity >= metrics.edgeThreshold)) return [];
+  const regions = [];
+  if (metrics.pixelSimilarity < metrics.pixelThreshold) regions.push({ pageId, box, category: "pixel" });
+  if (metrics.edgeSimilarity < metrics.edgeThreshold) regions.push({ pageId, box, category: "edge" });
+  return regions;
+}
+
+function overlapRatio(left, right) {
+  const x0 = Math.max(left.x, right.x);
+  const y0 = Math.max(left.y, right.y);
+  const x1 = Math.min(left.x + left.width, right.x + right.width);
+  const y1 = Math.min(left.y + left.height, right.y + right.height);
+  const intersection = Math.max(0, x1 - x0) * Math.max(0, y1 - y0);
+  return intersection / Math.max(1, left.width * left.height);
+}
+
+function failureCropFor({ sourcePackages, pageId, box }) {
+  for (const sourcePackage of sourcePackages) {
+    const asset = (sourcePackage.localizedAssets ?? []).find((candidate) => candidate.purpose === "failure-crop"
+      && candidate.sourcePageRef === pageId
+      && overlapRatio(candidate.sourceRegion.box, box) > 0);
+    if (asset) return { pageId, box: asset.sourceRegion.box, cropDigest: asset.blobRef };
+  }
+  return { pageId, box };
+}
+
+function suggestedPatchesFor({ componentRef, componentType, metrics }) {
+  const failed = metrics.filter((metric) => metric.threshold !== undefined && metric.direction === "lower-is-better"
+    ? metric.value > metric.threshold
+    : metric.threshold !== undefined && metric.direction === "higher-is-better" && metric.value < metric.threshold);
+  if (!failed.length) return [];
+  const first = failed[0];
+  if (componentType === "text") return [{
+    patchKind: "text-fitting",
+    targetRef: componentRef.replace(/^component-/, ""),
+    parameterPath: "/content/runs/0/style/fontSize/value",
+    direction: "replace",
+    confidence: 0.72,
+    expectedMetricImpact: [first],
+  }];
+  if (["shape", "image", "icon"].includes(componentType)) return [{
+    patchKind: first.name === "color-delta-e" ? "color" : "effect",
+    targetRef: componentRef.replace(/^component-/, ""),
+    parameterPath: first.name === "color-delta-e" ? "/appearance/fills/0/color/components" : "/appearance/opacity",
+    direction: "replace",
+    confidence: 0.68,
+    expectedMetricImpact: [first],
+  }];
+  return [{
+    patchKind: "structure",
+    targetRef: componentRef.replace(/^component-/, ""),
+    parameterPath: "/content",
+    direction: "snap",
+    confidence: 0.6,
+    expectedMetricImpact: [first],
+  }];
+}
+
+function componentResultsForVerification({ sourcePackages, evidenceGraph, resolvedScene, backendPlan, objectManifest, pageResults, protectedRegionResults }) {
+  const regionBySubject = new Map(protectedRegionResults.map((item) => [item.subjectRef, item]));
+  const pageResultById = new Map(pageResults.map((item) => [item.subjectRef, item]));
+  const operationsByNode = new Map();
+  for (const operation of backendPlan.operations) {
+    const operations = operationsByNode.get(operation.sceneNodeRef) ?? [];
+    operations.push(operation);
+    operationsByNode.set(operation.sceneNodeRef, operations);
+  }
+  const objectsByNode = new Map();
+  for (const object of objectManifest.objects) {
+    const objects = objectsByNode.get(object.sceneNodeId) ?? [];
+    objects.push(object);
+    objectsByNode.set(object.sceneNodeId, objects);
+  }
+
+  const components = [];
+  for (const page of resolvedScene?.pages ?? []) {
+    const pageResult = pageResultById.get(page.pageId);
+    const pageEvidenceRefs = (evidenceGraph?.evidence ?? [])
+      .filter((item) => item.sourceRegions?.some((region) => region.pageId === page.pageId))
+      .map((item) => item.id);
+    const pageOperations = backendPlan.operations.filter((operation) => operation.pageId === page.pageId);
+    const pageObjects = objectManifest.objects.filter((object) => object.slideId === page.pageId);
+    components.push({
+      componentRef: `component-page-${page.pageId}`,
+      componentType: "page",
+      status: pageResult?.status ?? "skipped",
+      metrics: pageResult?.metrics ? [
+        visualMetric("weighted-visual-score", pageResult.metrics.weightedScore),
+        visualMetric("pixel-similarity", pageResult.metrics.globalPixelSimilarity, pageResult.metrics.globalPixelThreshold),
+        visualMetric("edge-similarity", pageResult.metrics.globalEdgeSimilarity, pageResult.metrics.globalEdgeThreshold),
+      ] : [],
+      ...(pageResult?.status === "failed" ? {
+        failureRegions: [{
+          ...failureCropFor({
+            sourcePackages,
+            pageId: page.pageId,
+            box: { x: 0, y: 0, width: page.canvas.width, height: page.canvas.height, unit: "px", coordinateSpace: "source-canvas" },
+          }),
+          category: "geometry",
+        }],
+        suggestedPatches: [{ patchKind: "structure", targetRef: page.pageId, parameterPath: "/pages", direction: "replace", confidence: 0.5 }],
+      } : {}),
+      responsibility: {
+        evidenceRefs: pageEvidenceRefs,
+        sceneNodeRefs: page.nodes.map((node) => node.sceneNodeId),
+        operationRefs: pageOperations.map((operation) => operation.operationId),
+        objectRefs: pageObjects.map((object) => object.objectRef),
+      },
+    });
+
+    for (const node of page.nodes) {
+      const region = regionBySubject.get(`scene:${node.sceneNodeId}:effect`);
+      const operations = operationsByNode.get(node.sceneNodeId) ?? [];
+      const objects = objectsByNode.get(node.sceneNodeId) ?? [];
+      const structuralMetrics = structuralComponentMetrics({ node, operations, objects, operationByNode: operationsByNode });
+      const visualStatus = region?.status ?? "skipped";
+      const structuralComponentStatus = structuralMetrics.length ? structuralStatus(structuralMetrics) : "skipped";
+      components.push({
+        componentRef: `component-${node.sceneNodeId}`,
+        componentType: componentType(node),
+        status: visualStatus === "failed" || structuralComponentStatus === "failed"
+          ? "failed"
+          : visualStatus === "passed" || structuralComponentStatus === "passed" ? "passed" : "skipped",
+        metrics: [
+          ...(node.type === "text"
+          ? textComponentMetrics({ node, operations, regionMetrics: region?.metrics })
+          : ["shape", "table-cell", "chart", "image", "path", "icon", "connector"].includes(node.type)
+            ? shapeComponentMetrics({ node, operations, objects, regionMetrics: region?.metrics })
+            : componentMetrics(region?.metrics)),
+          ...structuralMetrics,
+        ],
+        ...(region?.status === "failed" || structuralComponentStatus === "failed" ? {
+          failureRegions: [
+            ...componentFailureRegions({ pageId: page.pageId, box: node.worldBounds.effect, metrics: region?.metrics })
+              .map((failureRegion) => ({ ...failureCropFor({ sourcePackages, pageId: failureRegion.pageId, box: failureRegion.box }), category: failureRegion.category })),
+            ...(structuralComponentStatus === "failed" ? [{ ...failureCropFor({ sourcePackages, pageId: page.pageId, box: node.worldBounds.effect }), category: "structure" }] : []),
+          ],
+          suggestedPatches: suggestedPatchesFor({
+            componentRef: `component-${node.sceneNodeId}`,
+            componentType: componentType(node),
+            metrics: [...(node.type === "text" ? textComponentMetrics({ node, operations, regionMetrics: region?.metrics }) : componentMetrics(region?.metrics)), ...structuralMetrics],
+          }),
+        } : {}),
+        responsibility: {
+          evidenceRefs: node.evidenceClosure.allEvidenceRefs,
+          sceneNodeRefs: [node.sceneNodeId],
+          operationRefs: operations.map((operation) => operation.operationId),
+          objectRefs: objects.map((object) => object.objectRef),
+        },
+      });
+    }
+  }
+  return components;
 }
 
 function regionsForPage({ evidenceGraph, resolvedScene, pageId }) {
@@ -185,7 +546,13 @@ async function verifyVisuals({ sourcePackages, evidenceGraph, resolvedScene, ren
       });
       visualScores.push(visual.weightedScore);
       pageResults.push(result(pageId, "visual", visual.status === "passed" ? "passed" : "failed", {
-        metrics: { weightedScore: visual.weightedScore, globalPixelSimilarity: visual.global.pixelSimilarity, globalEdgeSimilarity: visual.global.edgeSimilarity },
+        metrics: {
+          weightedScore: visual.weightedScore,
+          globalPixelSimilarity: visual.global.pixelSimilarity,
+          globalEdgeSimilarity: visual.global.edgeSimilarity,
+          globalPixelThreshold: visual.global.thresholds.pixel,
+          globalEdgeThreshold: visual.global.thresholds.edge,
+        },
         ...(visual.status === "passed" ? {} : { message: "页面视觉验证失败" }),
       }));
       for (const region of visual.regions) {
@@ -194,9 +561,12 @@ async function verifyVisuals({ sourcePackages, evidenceGraph, resolvedScene, ren
           metrics: {
             pixelSimilarity: region.pixelSimilarity,
             edgeSimilarity: region.edgeSimilarity,
+            meanColorDeltaE: region.meanColorDeltaE,
             pixelThreshold: region.thresholds.pixel,
             edgeThreshold: region.thresholds.edge,
+            ...(region.thresholds.deltaE === undefined ? {} : { colorDeltaEThreshold: region.thresholds.deltaE }),
           },
+          details: { bbox: region.bbox, excludeBboxes: region.excludeBboxes },
         }));
       }
       for (const hardFailure of visual.hardFailures) {
@@ -324,6 +694,98 @@ async function verifyEditability({ pptxPath, objectManifest }) {
   return { editabilityResults, failures };
 }
 
+function verifyAntiCheat({ sourcePackages, resolvedScene, backendPlan, objectManifest, visualThresholds, allowLoweredThresholds, sourceFailures, visualFailures, protectedRegionResults }) {
+  const antiCheatResults = [];
+  const failures = [];
+  const lowered = loweredThresholds(visualThresholds);
+  const thresholdResult = antiCheatResult(
+    "threshold-lowered",
+    lowered.length && !allowLoweredThresholds ? "failed" : "passed",
+    lowered.length
+      ? { message: allowLoweredThresholds ? "测试模式明确允许放宽视觉阈值" : "视觉阈值低于质量门禁最小值", details: { lowered } }
+      : { message: "视觉阈值未被放宽" },
+  );
+  antiCheatResults.push(thresholdResult);
+
+  const hiddenRegions = protectedRegionResults
+    .filter((item) => (item.details?.excludeBboxes ?? []).length > 0)
+    .map((item) => item.subjectRef);
+  antiCheatResults.push(antiCheatResult(
+    "hidden-source-detail",
+    hiddenRegions.length ? "failed" : "passed",
+    { message: hiddenRegions.length ? "保护区域排除了可见源图细节" : "保护区域未排除源图细节", details: { regionRefs: hiddenRegions } },
+  ));
+  const croppedPages = visualFailures
+    .filter((item) => item.code === "visual-comparison-error" && item.message.includes("像素尺寸一致"))
+    .map((item) => item.subjectRef);
+  antiCheatResults.push(antiCheatResult(
+    "cropped-failure-region",
+    croppedPages.length ? "failed" : "passed",
+    { message: croppedPages.length ? "渲染预览尺寸与规范化源图不一致，可能裁剪失败区域" : "渲染预览未裁剪失败区域", details: { pageIds: croppedPages } },
+  ));
+  const modifiedSources = sourceFailures
+    .filter((item) => ["raw-digest-mismatch", "raw-byte-length-mismatch", "canonical-pixels-invalid"].includes(item.code))
+    .map((item) => item.subjectRef);
+  antiCheatResults.push(antiCheatResult(
+    "source-fact-modified",
+    modifiedSources.length ? "failed" : "passed",
+    { message: modifiedSources.length ? "Source Package 的不可变事实未通过摘要绑定检查" : "Source Package 的不可变事实完整", details: { sourceRefs: modifiedSources } },
+  ));
+
+  const operationByNode = new Map(backendPlan.operations.map((operation) => [operation.sceneNodeRef, operation]));
+  const objectsByNode = new Map();
+  for (const object of objectManifest.objects) {
+    const objects = objectsByNode.get(object.sceneNodeId) ?? [];
+    objects.push(object);
+    objectsByNode.set(object.sceneNodeId, objects);
+  }
+  for (const page of resolvedScene?.pages ?? []) {
+    for (const node of page.nodes) {
+      const operation = operationByNode.get(node.sceneNodeId);
+      const objects = objectsByNode.get(node.sceneNodeId) ?? [];
+      const canvas = pageCanvas(sourcePackages, page.sourcePageRef);
+      if (node.type === "image") {
+        const approval = node.resolvedContent.rasterApproval?.status === "approved-original-raster";
+        const fullPage = boxCoverage(node.worldBounds.effect, canvas) >= 0.95;
+        const rasterResult = antiCheatResult(
+          fullPage ? "whole-page-raster" : "undeclared-raster-fallback",
+          approval ? "passed" : "failed",
+          {
+            subjectRef: node.sceneNodeId,
+            message: approval ? "图片节点具有显式 approved-original-raster 批准" : "图片节点缺少 approved-original-raster 批准",
+            details: { coverage: boxCoverage(node.worldBounds.effect, canvas), strategy: operation?.strategy },
+          },
+        );
+        antiCheatResults.push(rasterResult);
+      }
+      if (node.type === "text") {
+        const rasterObjects = objects.filter((object) => !object.virtual && object.nativeObjectKind === "image");
+        const textResult = antiCheatResult(
+          "text-raster",
+          rasterObjects.length ? "failed" : "passed",
+          {
+            subjectRef: node.sceneNodeId,
+            message: rasterObjects.length ? "要求可编辑的文字被物化为图片" : "可编辑文字未使用图片代理",
+            details: { objectRefs: rasterObjects.map((object) => object.objectRef) },
+          },
+        );
+        antiCheatResults.push(textResult);
+      }
+      const expectedObjectRefs = new Set(operation?.expectedObjects.map((object) => object.objectRef) ?? []);
+      const missingObjects = [...expectedObjectRefs].filter((objectRef) => !objects.some((object) => object.objectRef === objectRef));
+      const deletedResult = antiCheatResult(
+        "deleted-object",
+        missingObjects.length ? "failed" : "passed",
+        { subjectRef: node.sceneNodeId, message: missingObjects.length ? "计划对象被删除或未写入 Object Manifest" : "计划对象未被删除", details: { missingObjects } },
+      );
+      antiCheatResults.push(deletedResult);
+    }
+  }
+
+  for (const item of antiCheatResults.filter((item) => item.status === "failed")) failures.push(antiCheatFailure(item));
+  return { antiCheatResults, failures };
+}
+
 function relationshipRecords(document) {
   return Array.from(document.getElementsByTagNameNS(REL_NS, "Relationship")).map((node) => ({
     id: node.getAttribute("Id"),
@@ -406,6 +868,7 @@ export async function verifyV2Candidate({
   diffDir,
   reportPath,
   verificationId,
+  allowLoweredThresholds = false,
 } = {}) {
   if (!backendPlan || backendPlan.contractKind !== "backend-plan") throw new TypeError("V2 verifier requires Backend Plan");
   if (!objectManifest || objectManifest.contractKind !== "object-manifest") throw new TypeError("V2 verifier requires Object Manifest");
@@ -417,16 +880,38 @@ export async function verifyV2Candidate({
   const closure = await verifyObjectClosure({ sourcePackages, reconstructionSpec, evidenceGraph, resolvedScene, backendPlan, objectManifest, pptxPath });
   const editability = await verifyEditability({ pptxPath, objectManifest });
   const packageSafety = await verifyPackageSafety({ pptxPath, objectManifest });
-  const failures = [...source.failures, ...visual.failures, ...closure.failures, ...editability.failures, ...packageSafety.failures];
+  const antiCheat = verifyAntiCheat({
+    sourcePackages,
+    resolvedScene,
+    backendPlan,
+    objectManifest,
+    visualThresholds,
+    allowLoweredThresholds,
+    sourceFailures: source.failures,
+    visualFailures: visual.failures,
+    protectedRegionResults: visual.protectedRegionResults,
+  });
+  const componentResults = componentResultsForVerification({
+    sourcePackages,
+    evidenceGraph,
+    resolvedScene,
+    backendPlan,
+    objectManifest,
+    pageResults: visual.pageResults,
+    protectedRegionResults: visual.protectedRegionResults,
+  });
+  const failures = [...source.failures, ...visual.failures, ...closure.failures, ...editability.failures, ...packageSafety.failures, ...antiCheat.failures];
   const summary = summarize([
     source.sourceResults,
     visual.pageResults,
     visual.evidenceResults,
     visual.sceneNodeResults,
+    componentResults,
     closure.operationResults,
     closure.objectResults,
     visual.protectedRegionResults,
     editability.editabilityResults,
+    antiCheat.antiCheatResults,
     [packageSafety.packageSecurity],
   ], visual.weightedVisualScore);
   const verificationResult = {
@@ -444,7 +929,9 @@ export async function verifyV2Candidate({
     operationResults: closure.operationResults,
     objectResults: closure.objectResults,
     protectedRegionResults: visual.protectedRegionResults,
+    componentResults,
     editabilityResults: editability.editabilityResults,
+    antiCheatResults: antiCheat.antiCheatResults,
     packageSecurity: packageSafety.packageSecurity,
     summary: { ...summary, gateStatus: failures.length ? "failed-quality-gate" : summary.gateStatus, failedChecks: Math.max(summary.failedChecks, failures.length) },
     failures,

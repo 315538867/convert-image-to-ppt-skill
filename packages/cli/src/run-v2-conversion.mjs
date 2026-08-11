@@ -94,6 +94,29 @@ function sourceBlobPathMap(sourcePackage, normalized) {
   };
 }
 
+function sourceAnalysisRegions(evidenceGraph) {
+  const seen = new Set();
+  const regions = [];
+  for (const evidence of evidenceGraph.evidence ?? []) {
+    for (const [index, region] of (evidence.sourceRegions ?? []).entries()) {
+      if (!region.box || region.box.coordinateSpace !== "source-canvas") continue;
+      const key = JSON.stringify({ pageId: region.pageId, box: region.box });
+      if (seen.has(key)) continue;
+      seen.add(key);
+      regions.push({
+        id: `${evidence.id}-${index}`,
+        pageId: region.pageId,
+        x: region.box.x,
+        y: region.box.y,
+        width: region.box.width,
+        height: region.box.height,
+        purpose: region.purpose ?? "review-crop",
+      });
+    }
+  }
+  return regions;
+}
+
 function outputSpecs(runDir, renderedPagePaths, diffPaths) {
   return [
     { filePath: path.join(runDir, "output.pptx"), mediaType: "application/vnd.openxmlformats-officedocument.presentationml.presentation", role: "pptx-output" },
@@ -115,20 +138,23 @@ export async function runV2Conversion({
   workspaceDir,
   runId,
   visualThresholds,
+  allowLoweredThresholds,
 }) {
   if (!sourcePath || !contractsPath || !workspaceDir) throw new Error("V2 转换需要 sourcePath、contractsPath 和 workspaceDir");
   const run = await createRunWorkspace({ workspaceDir, runId });
+  const input = JSON.parse(await fs.readFile(contractsPath, "utf8"));
+  const contracts = Array.isArray(input.contracts) ? input.contracts : [input];
+  const reconstructionSpec = contractOf(contracts, "reconstruction-spec");
+  const evidenceGraph = contractOf(contracts, "evidence-graph");
   const sourcePackagePath = path.join(run.runDir, "source-package.json");
   const normalized = await normalizeSource({
     sourcePath,
     sourcePackagePath,
     blobDir: path.join(run.runDir, "blobs"),
+    reviewRegions: sourceAnalysisRegions(evidenceGraph),
+    analysisDerivatives: true,
   });
   const sourcePackage = normalized.sourcePackage;
-  const input = JSON.parse(await fs.readFile(contractsPath, "utf8"));
-  const contracts = Array.isArray(input.contracts) ? input.contracts : [input];
-  const reconstructionSpec = contractOf(contracts, "reconstruction-spec");
-  const evidenceGraph = contractOf(contracts, "evidence-graph");
   const authorValidation = validateV2Contracts({ schemaVersion: 2, contracts: [sourcePackage, reconstructionSpec, evidenceGraph] });
   if (!authorValidation.ok) {
     const error = new Error(`V2 作者契约校验失败:\n${authorValidation.errors.map((item) => `${item.code}: ${item.message}`).join("\n")}`);
@@ -159,6 +185,7 @@ export async function runV2Conversion({
     ...sourceBlobPathMap(sourcePackage, normalized),
     renderedPagePaths,
     visualThresholds,
+    allowLoweredThresholds,
     diffDir,
     reportPath: path.join(run.runDir, "verification-result.json"),
   });

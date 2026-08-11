@@ -25,6 +25,42 @@
         "end": { "type": "integer", "minimum": 0 }
       }
     },
+    "jsonPointer": { "type": "string", "pattern": "^/(?:[^/~]|~0|~1)*(?:/(?:[^/~]|~0|~1)*)*$" },
+    "numericRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "step": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "parameterValue": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" },
+        { "$ref": "#/$defs/length" },
+        { "$ref": "#/$defs/color" },
+        { "$ref": "#/$defs/box" },
+        { "$ref": "#/$defs/point" },
+        { "$ref": "#/$defs/matrix2d" }
+      ]
+    },
+    "metricValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "$ref": "#/$defs/identifier" },
+        "value": { "type": "number" },
+        "unit": { "enum": ["px", "pt", "ratio", "delta-e", "count", "score", "ms"] },
+        "threshold": { "type": "number" },
+        "direction": { "enum": ["higher-is-better", "lower-is-better", "target"] }
+      }
+    },
     "canvas": {
       "type": "object",
       "additionalProperties": false,

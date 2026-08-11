@@ -20,6 +20,8 @@
       "uniqueItems": true,
       "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/blobRef" }
     },
+    "styleTokens": { "type": "array", "items": { "$ref": "#/$defs/styleToken" } },
+    "optimizerPatches": { "type": "array", "items": { "$ref": "#/$defs/optimizerPatch" } },
     "pages": {
       "type": "array",
       "minItems": 1,
@@ -853,6 +855,118 @@
         "metadata": { "type": "object" }
       }
     },
+    "fitConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parameterPath", "defaultValue", "range", "unit", "evidenceRefs", "editabilityAspects"],
+      "properties": {
+        "parameterPath": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/jsonPointer" },
+        "defaultValue": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/parameterValue" },
+        "range": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/numericRange" },
+        "unit": { "enum": ["px", "pt", "emu", "ratio", "degree", "color-component", "alpha"] },
+        "priority": { "type": "integer", "minimum": 0 },
+        "locked": { "type": "boolean" },
+        "evidenceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "editabilityAspects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["content", "geometry", "appearance", "text-style", "crop", "path-points", "connector-endpoints", "table-structure", "list-structure", "chart-primitives", "group-membership"] }
+        },
+        "forbiddenFallbacks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["approved-original-raster", "whole-page-raster", "text-raster", "simple-icon-raster", "source-derived-composite"] }
+        }
+      }
+    },
+    "styleToken": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokenId", "kind", "resolvedValue", "evidenceRefs", "scope", "allowedDeviation"],
+      "properties": {
+        "tokenId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "kind": { "enum": ["font-family", "font-size", "font-scale", "color", "stroke-width", "corner-radius", "shadow", "gradient", "spacing", "opacity"] },
+        "resolvedValue": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/parameterValue" },
+        "evidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pageRefs", "nodeRefs"],
+          "properties": {
+            "pageRefs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
+            "nodeRefs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } }
+          }
+        },
+        "allowedDeviation": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/metricValue" },
+        "localOverrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["nodeRef", "value"],
+            "properties": {
+              "nodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+              "value": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/parameterValue" },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "structureCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateId", "kind", "evidenceRefs", "editableSemantics", "unknownSemantics", "fallbackLimit"],
+      "properties": {
+        "candidateId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "kind": { "enum": ["table-grid", "chart-primitives", "flowchart", "connector-graph", "icon-outline", "complex-path"] },
+        "evidenceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "editableSemantics": { "type": "array", "items": { "enum": ["text", "cell-grid", "connector-endpoints", "path-points", "chart-primitives", "shape-geometry", "style"] } },
+        "unknownSemantics": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
+        "visualPrimitiveRefs": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
+        "fallbackLimit": { "enum": ["editable-only", "approved-original-raster-only", "reject-if-uneditable"] },
+        "metadata": { "type": "object" }
+      }
+    },
+    "optimizerPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["patchId", "targetNodeRef", "parameterPath", "oldValue", "newValue", "evidenceRefs", "diagnosticRefs", "iteration"],
+      "properties": {
+        "patchId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "targetNodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "parameterPath": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/jsonPointer" },
+        "oldValue": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/parameterValue" },
+        "newValue": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/parameterValue" },
+        "evidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "diagnosticRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "iteration": { "type": "integer", "minimum": 0 },
+        "generator": { "type": "string", "minLength": 1 },
+        "risk": { "enum": ["low", "medium", "high"] }
+      }
+    },
     "node": {
       "type": "object",
       "additionalProperties": false,
@@ -869,6 +983,18 @@
           "uniqueItems": true,
           "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
         },
+        "styleTokenRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "fitConstraints": { "type": "array", "items": { "$ref": "#/$defs/fitConstraint" } },
+        "lockedFields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/jsonPointer" }
+        },
+        "structureCandidates": { "type": "array", "items": { "$ref": "#/$defs/structureCandidate" } },
         "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
       },
       "allOf": [

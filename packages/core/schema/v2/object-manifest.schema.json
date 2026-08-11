@@ -44,7 +44,7 @@
   },
   "$defs": {
     "actualFeature": {
-      "enum": ["native-shape", "native-text", "rich-text-runs", "manual-text-metrics", "custom-geometry", "picture-crop", "connector-binding", "grouping", "native-table", "native-chart", "alpha-mask", "luminance-mask", "effect-list"]
+      "enum": ["native-shape", "native-text", "rich-text-runs", "manual-text-metrics", "custom-geometry", "picture-crop", "picture-opacity", "connector-binding", "connector-arrows", "grouping", "native-table", "native-chart", "alpha-mask", "luminance-mask", "effect-list"]
     },
     "actualTransform": {
       "type": "object",
@@ -60,12 +60,15 @@
     "object": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["objectRef", "sceneNodeId", "operationId", "slideId", "virtual", "ooxmlObjectIds", "nativeObjectKind", "bbox", "transform", "contentDigest", "editability", "actualOoxmlFeatures", "relationshipIds"],
+      "required": ["objectRef", "sceneNodeId", "operationId", "slideId", "expectedRole", "containerObjectRef", "loweringStrategyIds", "virtual", "ooxmlObjectIds", "nativeObjectKind", "bbox", "transform", "contentDigest", "editability", "actualOoxmlFeatures", "relationshipIds"],
       "properties": {
         "objectRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
         "sceneNodeId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
         "operationId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
         "slideId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "expectedRole": { "enum": ["primary", "background", "fill", "border-top", "border-right", "border-bottom", "border-left", "stroke-primitive", "mask", "effect", "glyph-run", "chart-primitive", "table-primitive"] },
+        "containerObjectRef": { "oneOf": [{ "type": "null" }, { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }] },
+        "loweringStrategyIds": { "type": "array", "uniqueItems": true, "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
         "virtual": { "type": "boolean" },
         "ooxmlObjectIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
         "nativeObjectKind": { "enum": ["virtual", "group", "shape", "text", "path", "image", "connector", "table", "chart"] },

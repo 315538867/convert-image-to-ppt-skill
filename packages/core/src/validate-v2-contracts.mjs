@@ -103,6 +103,106 @@ function measurementNodeRefs(measurement) {
   }
 }
 
+function pageMapById(pages) {
+  return new Map(pages.map((page) => [page.pageId, page]));
+}
+
+function isSourceCanvasBox(box, page) {
+  if (box?.coordinateSpace !== "source-canvas" || box?.unit !== "px") return false;
+  return box.x >= 0
+    && box.y >= 0
+    && box.x + box.width <= page.canvas.width
+    && box.y + box.height <= page.canvas.height;
+}
+
+function sourceRegionCoverage(region, page) {
+  if (!isSourceCanvasBox(region?.box, page)) return 0;
+  return (region.box.width * region.box.height) / (page.canvas.width * page.canvas.height);
+}
+
+function pointerSegments(pointer) {
+  if (pointer === "") return [];
+  return pointer.slice(1).split("/").map((segment) => segment.replace(/~1/g, "/").replace(/~0/g, "~"));
+}
+
+function valueAtPointer(value, pointer) {
+  let current = value;
+  for (const segment of pointerSegments(pointer)) {
+    if (Array.isArray(current) && Number.isInteger(Number(segment)) && Number(segment) >= 0) current = current[Number(segment)];
+    else if (current && typeof current === "object") current = current[segment];
+    else return { found: false };
+    if (current === undefined) return { found: false };
+  }
+  return { found: true, value: current };
+}
+
+function pointersOverlap(left, right) {
+  return left === right || left.startsWith(right + "/") || right.startsWith(left + "/");
+}
+
+function sameValue(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function sameValueType(left, right) {
+  if (Array.isArray(left) || Array.isArray(right)) return Array.isArray(left) && Array.isArray(right);
+  if (left === null || right === null) return left === null && right === null;
+  return typeof left === typeof right;
+}
+
+function validateSourceAnalysis(source, errors) {
+  const pagesById = pageMapById(source.pages ?? []);
+  const knownBlobDigests = blobDigestsOf([source.rawBlob, source.canonicalPixels, ...(source.derivedBlobs ?? [])]);
+  const derivativeIds = uniqueBy(
+    source.analysisDerivatives ?? [],
+    "derivativeId",
+    errors,
+    "V2_DERIVATIVE_ID_DUPLICATE",
+    "Source Package " + source.sourceId + " derivativeId",
+  );
+
+  for (const derivative of source.analysisDerivatives ?? []) {
+    if (!pagesById.has(derivative.sourcePageRef)) {
+      fail(errors, "V2_DERIVATIVE_SOURCE_PAGE_REF_MISSING", "派生物 " + derivative.derivativeId + " 引用未知源页面: " + derivative.sourcePageRef);
+    }
+    if (derivative.canonicalPixelDigest !== source.canonicalPixels.digest) {
+      fail(errors, "V2_DERIVATIVE_CANONICAL_DIGEST_MISMATCH", "派生物 " + derivative.derivativeId + " canonicalPixelDigest 必须匹配 Source Package");
+    }
+    for (const region of derivative.sourceRegions ?? []) {
+      if (region.pageId !== derivative.sourcePageRef || !pagesById.has(region.pageId)) {
+        fail(errors, "V2_DERIVATIVE_REGION_PAGE_MISMATCH", "派生物 " + derivative.derivativeId + " sourceRegions 必须绑定 sourcePageRef");
+      } else if (!isSourceCanvasBox(region.box, pagesById.get(region.pageId))) {
+        fail(errors, "V2_DERIVATIVE_REGION_OUT_OF_BOUNDS", "派生物 " + derivative.derivativeId + " sourceRegion 超出 canonical canvas");
+      }
+    }
+    for (const digest of derivative.blobRefs ?? []) {
+      if (!knownBlobDigests.has(digest)) fail(errors, "V2_DERIVATIVE_BLOB_REF_MISSING", "派生物 " + derivative.derivativeId + " 引用未知 Blob: " + digest);
+    }
+  }
+
+  const assetIds = uniqueBy(
+    source.localizedAssets ?? [],
+    "assetId",
+    errors,
+    "V2_LOCALIZED_ASSET_ID_DUPLICATE",
+    "Source Package " + source.sourceId + " localized assetId",
+  );
+  for (const asset of source.localizedAssets ?? []) {
+    if (!pagesById.has(asset.sourcePageRef)) {
+      fail(errors, "V2_LOCALIZED_ASSET_SOURCE_PAGE_REF_MISSING", "局部资源 " + asset.assetId + " 引用未知源页面: " + asset.sourcePageRef);
+    }
+    if (asset.sourceRegion?.pageId !== asset.sourcePageRef || !pagesById.has(asset.sourceRegion?.pageId)) {
+      fail(errors, "V2_LOCALIZED_ASSET_REGION_PAGE_MISMATCH", "局部资源 " + asset.assetId + " sourceRegion 必须绑定 sourcePageRef");
+    } else if (!isSourceCanvasBox(asset.sourceRegion.box, pagesById.get(asset.sourceRegion.pageId))) {
+      fail(errors, "V2_LOCALIZED_ASSET_REGION_OUT_OF_BOUNDS", "局部资源 " + asset.assetId + " sourceRegion 超出 canonical canvas");
+    }
+    if (!knownBlobDigests.has(asset.blobRef)) fail(errors, "V2_LOCALIZED_ASSET_BLOB_REF_MISSING", "局部资源 " + asset.assetId + " 引用未知 Blob: " + asset.blobRef);
+    if (!derivativeIds.has(asset.parentDerivativeRef)) {
+      fail(errors, "V2_LOCALIZED_ASSET_PARENT_DERIVATIVE_MISSING", "局部资源 " + asset.assetId + " 引用未知派生物: " + asset.parentDerivativeRef);
+    }
+  }
+}
+
 function checkCrossContractSemantics(contracts, errors) {
   const byKind = new Map();
   for (const contract of contracts) {
@@ -128,12 +228,15 @@ function checkCrossContractSemantics(contracts, errors) {
   const sourceIds = uniqueBy(sources, "sourceId", errors, "V2_SOURCE_ID_DUPLICATE", "Source Package sourceId");
   const sourcePages = sources.flatMap((source) => source.pages ?? []);
   const sourcePageIds = uniqueBy(sourcePages, "pageId", errors, "V2_SOURCE_PAGE_ID_DUPLICATE", "Source Package pageId");
+  const sourcePagesById = pageMapById(sourcePages);
   const knownBlobDigests = new Set([
     ...blobDigestsOf(sources.flatMap((source) => [source.rawBlob, source.canonicalPixels, ...(source.derivedBlobs ?? [])])),
     ...blobDigestsOf(reconstruction?.assetRefs),
   ]);
   const reconstructionPages = reconstruction?.pages ?? [];
   const reconstructionPageIds = uniqueBy(reconstructionPages, "pageId", errors, "V2_RECONSTRUCTION_PAGE_ID_DUPLICATE", "Reconstruction Spec pageId");
+
+  for (const source of sources) validateSourceAnalysis(source, errors);
 
   if (reconstruction) {
     for (const sourceRef of reconstruction.sourcePackageRefs) {
@@ -155,6 +258,8 @@ function checkCrossContractSemantics(contracts, errors) {
   }
 
   const evidenceIds = new Set();
+  const evidenceItemsById = new Map();
+  const evidenceItemsByNodeId = new Map();
   if (evidence) {
     if (reconstruction && evidence.documentRef !== reconstruction.documentId) {
       fail(errors, "V2_EVIDENCE_DOCUMENT_REF_MISMATCH", `Evidence Graph documentRef 不匹配: ${evidence.documentRef}`);
@@ -164,11 +269,24 @@ function checkCrossContractSemantics(contracts, errors) {
     }
     for (const id of uniqueBy(evidence.evidence ?? [], "id", errors, "V2_EVIDENCE_ID_DUPLICATE", "Evidence id")) evidenceIds.add(id);
     for (const item of evidence.evidence ?? []) {
+      evidenceItemsById.set(item.id, item);
       for (const region of item.sourceRegions ?? []) {
         if (!sourcePageIds.has(region.pageId)) fail(errors, "V2_EVIDENCE_PAGE_REF_MISSING", `Evidence ${item.id} 引用未知源页面: ${region.pageId}`);
       }
+      for (const region of item.sourceRegions ?? []) {
+        if (sourcePageIds.has(region.pageId) && !isSourceCanvasBox(region.box, sourcePagesById.get(region.pageId))) {
+          fail(errors, "V2_EVIDENCE_REGION_OUT_OF_BOUNDS", "Evidence " + item.id + " sourceRegion 超出 canonical canvas");
+        } else if (sourcePageIds.has(region.pageId)
+          && item.subjects.length <= 1
+          && sourceRegionCoverage(region, sourcePagesById.get(region.pageId)) > 0.35) {
+          fail(errors, "V2_EVIDENCE_REGION_TOO_BROAD", "Evidence " + item.id + " sourceRegion 过宽且缺少分组件 subjects");
+        }
+      }
       for (const subject of item.subjects ?? []) {
         if (!reconstructionNodeIds.has(subject.nodeRef)) fail(errors, "V2_EVIDENCE_SUBJECT_REF_MISSING", `Evidence ${item.id} 引用未知节点: ${subject.nodeRef}`);
+        const items = evidenceItemsByNodeId.get(subject.nodeRef) ?? [];
+        items.push(item);
+        evidenceItemsByNodeId.set(subject.nodeRef, items);
       }
       for (const nodeRef of measurementNodeRefs(item.measurement)) {
         if (!reconstructionNodeIds.has(nodeRef)) fail(errors, "V2_EVIDENCE_MEASUREMENT_NODE_REF_MISSING", `Evidence ${item.id} 的 measurement 引用未知节点: ${nodeRef}`);
@@ -178,6 +296,40 @@ function checkCrossContractSemantics(contracts, errors) {
         fail(errors, "V2_EVIDENCE_BLOB_REF_MISSING", `Evidence ${item.id} 引用未知 Blob: ${measurementBlobDigest}`);
       }
       for (const ref of item.provenance?.evidenceBlobRefs ?? []) knownBlobDigests.add(ref.digest);
+      for (const diagnostic of item.qualityDiagnostics ?? []) {
+        if (diagnostic.evidenceRef && diagnostic.evidenceRef !== item.id) {
+          fail(errors, "V2_EVIDENCE_DIAGNOSTIC_REF_MISMATCH", "Evidence " + item.id + " 的 quality diagnostic 引用其他 Evidence: " + diagnostic.evidenceRef);
+        }
+        if (diagnostic.nodeRef && !reconstructionNodeIds.has(diagnostic.nodeRef)) {
+          fail(errors, "V2_EVIDENCE_DIAGNOSTIC_NODE_REF_MISSING", "Evidence " + item.id + " 的 quality diagnostic 引用未知节点: " + diagnostic.nodeRef);
+        }
+        if (diagnostic.severity === "error") {
+          fail(errors, "V2_EVIDENCE_QUALITY_ERROR", "Evidence " + item.id + " 存在不可用质量诊断: " + diagnostic.code);
+        }
+      }
+    }
+  }
+
+  const reconstructionNodesById = new Map(reconstructionNodes.map((node) => [node.id, node]));
+  const styleTokenIds = new Set();
+  const styleTokensById = new Map();
+  if (reconstruction) {
+    for (const token of reconstruction.styleTokens ?? []) {
+      if (styleTokenIds.has(token.tokenId)) fail(errors, "V2_STYLE_TOKEN_ID_DUPLICATE", "style token 重复: " + token.tokenId);
+      styleTokenIds.add(token.tokenId);
+      styleTokensById.set(token.tokenId, token);
+      for (const evidenceRef of token.evidenceRefs ?? []) {
+        if (!evidenceIds.has(evidenceRef)) fail(errors, "V2_STYLE_TOKEN_EVIDENCE_REF_MISSING", "style token " + token.tokenId + " 引用未知 Evidence: " + evidenceRef);
+      }
+      for (const pageRef of token.scope?.pageRefs ?? []) {
+        if (!reconstructionPageIds.has(pageRef)) fail(errors, "V2_STYLE_TOKEN_PAGE_REF_MISSING", "style token " + token.tokenId + " 引用未知页面: " + pageRef);
+      }
+      for (const nodeRef of token.scope?.nodeRefs ?? []) {
+        if (!reconstructionNodesById.has(nodeRef)) fail(errors, "V2_STYLE_TOKEN_NODE_REF_MISSING", "style token " + token.tokenId + " 引用未知节点: " + nodeRef);
+      }
+      for (const override of token.localOverrides ?? []) {
+        if (!reconstructionNodesById.has(override.nodeRef)) fail(errors, "V2_STYLE_TOKEN_OVERRIDE_NODE_REF_MISSING", "style token " + token.tokenId + " override 引用未知节点: " + override.nodeRef);
+      }
     }
   }
 
@@ -208,6 +360,111 @@ function checkCrossContractSemantics(contracts, errors) {
     }
     for (const evidenceRef of node.content?.dataProvenanceEvidenceRefs ?? []) {
       if (!evidenceIds.has(evidenceRef)) fail(errors, "V2_CHART_EVIDENCE_REF_MISSING", `图表 ${node.id} 引用未知数据 Evidence: ${evidenceRef}`);
+    }
+  }
+
+  for (const node of reconstructionNodes) {
+    const directAndSubjectEvidence = new Set([
+      ...(node.evidenceRefs ?? []),
+      ...(evidenceItemsByNodeId.get(node.id) ?? []).map((item) => item.id),
+    ]);
+    if (node.type === "text"
+      && node.editability?.required
+      && node.editability.requiredAspects?.some((aspect) => ["content", "text-style"].includes(aspect))
+      && ![...directAndSubjectEvidence].some((evidenceRef) => ["text-content", "text-ink", "text-metrics"].includes(evidenceItemsById.get(evidenceRef)?.kind))) {
+      fail(errors, "V2_TEXT_METRIC_EVIDENCE_MISSING", "可编辑文字节点 " + node.id + " 缺少 text content、text ink 或 text metrics evidence");
+    }
+    for (const tokenRef of node.styleTokenRefs ?? []) {
+      if (!styleTokenIds.has(tokenRef)) fail(errors, "V2_NODE_STYLE_TOKEN_REF_MISSING", "节点 " + node.id + " 引用未知 style token: " + tokenRef);
+    }
+    const styleTokensByKind = new Map();
+    for (const tokenRef of node.styleTokenRefs ?? []) {
+      const token = styleTokensById.get(tokenRef);
+      if (!token) continue;
+      const existing = styleTokensByKind.get(token.kind);
+      if (existing && !sameValue(existing.resolvedValue, token.resolvedValue)) {
+        fail(errors, "V2_STYLE_TOKEN_CONFLICT", "节点 " + node.id + " 存在同类 style token 冲突: " + token.kind);
+      }
+      styleTokensByKind.set(token.kind, token);
+    }
+    for (const constraint of node.fitConstraints ?? []) {
+      const current = valueAtPointer(node, constraint.parameterPath);
+      if (!current.found) fail(errors, "V2_FIT_CONSTRAINT_PATH_MISSING", "节点 " + node.id + " fit constraint 引用未知参数: " + constraint.parameterPath);
+      if (constraint.range.min > constraint.range.max) {
+        fail(errors, "V2_FIT_CONSTRAINT_RANGE_INVALID", "节点 " + node.id + " fit constraint 范围无效: " + constraint.parameterPath);
+      }
+      if (typeof constraint.defaultValue === "number"
+        && (constraint.defaultValue < constraint.range.min || constraint.defaultValue > constraint.range.max)) {
+        fail(errors, "V2_FIT_CONSTRAINT_DEFAULT_OUT_OF_RANGE", "节点 " + node.id + " fit constraint 默认值超出范围: " + constraint.parameterPath);
+      }
+      for (const evidenceRef of constraint.evidenceRefs ?? []) {
+        if (!evidenceIds.has(evidenceRef)) fail(errors, "V2_FIT_CONSTRAINT_EVIDENCE_REF_MISSING", "节点 " + node.id + " fit constraint 引用未知 Evidence: " + evidenceRef);
+      }
+    }
+    for (const candidate of node.structureCandidates ?? []) {
+      for (const evidenceRef of candidate.evidenceRefs ?? []) {
+        if (!evidenceIds.has(evidenceRef)) fail(errors, "V2_STRUCTURE_CANDIDATE_EVIDENCE_REF_MISSING", "节点 " + node.id + " structure candidate 引用未知 Evidence: " + evidenceRef);
+      }
+      for (const nodeRef of candidate.visualPrimitiveRefs ?? []) {
+        if (!reconstructionNodesById.has(nodeRef)) fail(errors, "V2_STRUCTURE_CANDIDATE_NODE_REF_MISSING", "节点 " + node.id + " structure candidate 引用未知节点: " + nodeRef);
+      }
+    }
+  }
+
+  if (evidence) {
+    for (const diagnostic of evidence.qualityDiagnostics ?? []) {
+      if (diagnostic.evidenceRef && !evidenceIds.has(diagnostic.evidenceRef)) {
+        fail(errors, "V2_EVIDENCE_DIAGNOSTIC_REF_MISSING", "Evidence Graph quality diagnostic 引用未知 Evidence: " + diagnostic.evidenceRef);
+      }
+      if (diagnostic.nodeRef && !reconstructionNodeIds.has(diagnostic.nodeRef)) {
+        fail(errors, "V2_EVIDENCE_DIAGNOSTIC_NODE_REF_MISSING", "Evidence Graph quality diagnostic 引用未知节点: " + diagnostic.nodeRef);
+      }
+      if (diagnostic.severity === "error") {
+        fail(errors, "V2_EVIDENCE_QUALITY_ERROR", "Evidence Graph 存在不可用质量诊断: " + diagnostic.code);
+      }
+    }
+  }
+
+  if (reconstruction) {
+    const patchIds = uniqueBy(reconstruction.optimizerPatches ?? [], "patchId", errors, "V2_OPTIMIZER_PATCH_ID_DUPLICATE", "optimizer patch id");
+    for (const patch of reconstruction.optimizerPatches ?? []) {
+      const node = reconstructionNodesById.get(patch.targetNodeRef);
+      if (!node) {
+        fail(errors, "V2_OPTIMIZER_PATCH_NODE_REF_MISSING", "optimizer patch " + patch.patchId + " 引用未知节点: " + patch.targetNodeRef);
+        continue;
+      }
+      const current = valueAtPointer(node, patch.parameterPath);
+      if (!current.found) {
+        fail(errors, "V2_OPTIMIZER_PATCH_PATH_MISSING", "optimizer patch " + patch.patchId + " 引用未知参数: " + patch.parameterPath);
+      } else {
+        if (!sameValue(current.value, patch.oldValue)) {
+          fail(errors, "V2_OPTIMIZER_PATCH_OLD_VALUE_MISMATCH", "optimizer patch " + patch.patchId + " oldValue 与作者契约不一致");
+        }
+        if (!sameValueType(current.value, patch.newValue)) {
+          fail(errors, "V2_OPTIMIZER_PATCH_VALUE_TYPE_MISMATCH", "optimizer patch " + patch.patchId + " newValue 类型与目标参数不一致");
+        }
+      }
+      if ((node.lockedFields ?? []).some((pointer) => pointersOverlap(pointer, patch.parameterPath))) {
+        fail(errors, "V2_OPTIMIZER_PATCH_LOCKED_FIELD", "optimizer patch " + patch.patchId + " 试图修改 locked field: " + patch.parameterPath);
+      }
+      const fitConstraint = (node.fitConstraints ?? []).find((item) => item.parameterPath === patch.parameterPath);
+      if (fitConstraint?.locked) {
+        fail(errors, "V2_OPTIMIZER_PATCH_LOCKED_CONSTRAINT", "optimizer patch " + patch.patchId + " 试图修改 locked fit constraint: " + patch.parameterPath);
+      }
+      if (fitConstraint && typeof patch.newValue === "number"
+        && (patch.newValue < fitConstraint.range.min || patch.newValue > fitConstraint.range.max)) {
+        fail(errors, "V2_OPTIMIZER_PATCH_OUT_OF_RANGE", "optimizer patch " + patch.patchId + " 超出 fit constraint 范围: " + patch.parameterPath);
+      }
+      const forbiddenFallbacks = new Set((node.fitConstraints ?? []).flatMap((constraint) => constraint.forbiddenFallbacks ?? []));
+      if (typeof patch.newValue === "string" && forbiddenFallbacks.has(patch.newValue)) {
+        fail(errors, "V2_OPTIMIZER_PATCH_FORBIDDEN_FALLBACK", "optimizer patch " + patch.patchId + " 试图引入禁用 fallback: " + patch.newValue);
+      }
+      for (const evidenceRef of patch.evidenceRefs ?? []) {
+        if (!evidenceIds.has(evidenceRef)) fail(errors, "V2_OPTIMIZER_PATCH_EVIDENCE_REF_MISSING", "optimizer patch " + patch.patchId + " 引用未知 Evidence: " + evidenceRef);
+      }
+    }
+    if (patchIds.size !== (reconstruction.optimizerPatches ?? []).length) {
+      fail(errors, "V2_OPTIMIZER_PATCH_ID_DUPLICATE", "optimizer patch id 必须唯一");
     }
   }
 
@@ -286,6 +543,10 @@ function checkCrossContractSemantics(contracts, errors) {
     const manifestPageIds = uniqueBy(objectManifest.pages ?? [], "pageId", errors, "V2_OBJECT_MANIFEST_PAGE_ID_DUPLICATE", "Object Manifest pageId");
     const manifestObjectRefs = uniqueBy(objectManifest.objects ?? [], "objectRef", errors, "V2_OBJECT_MANIFEST_OBJECT_REF_DUPLICATE", "Object Manifest objectRef");
     const expectedByRef = new Map((plan?.operations ?? []).flatMap((operation) => operation.expectedObjects.map((expected) => [expected.objectRef, { operation, expected }])));
+    const primaryObjectRefBySceneNode = new Map((plan?.operations ?? []).map((operation) => [
+      operation.sceneNodeRef,
+      operation.expectedObjects.find((expected) => expected.role === "primary")?.objectRef ?? null,
+    ]));
     for (const page of objectManifest.pages ?? []) {
       if (plan && !(plan.pages ?? []).some((candidate) => candidate.pageId === page.pageId)) fail(errors, "V2_OBJECT_MANIFEST_PAGE_REF_MISSING", `Object Manifest 引用未知计划页面: ${page.pageId}`);
       for (const objectRef of page.objectRefs ?? []) {
@@ -302,6 +563,15 @@ function checkCrossContractSemantics(contracts, errors) {
       if (!planned) continue;
       if (object.operationId !== planned.operation.operationId || object.sceneNodeId !== planned.operation.sceneNodeRef) fail(errors, "V2_OBJECT_MANIFEST_PROVENANCE_MISMATCH", `Object Manifest 对象 ${object.objectRef} 来源闭包不匹配`);
       if (object.slideId !== planned.expected.slideId || object.virtual !== planned.expected.virtual) fail(errors, "V2_OBJECT_MANIFEST_EXPECTATION_MISMATCH", `Object Manifest 对象 ${object.objectRef} 与 expected object 不匹配`);
+      if (object.expectedRole !== planned.expected.role) fail(errors, "V2_OBJECT_MANIFEST_ROLE_MISMATCH", `Object Manifest 对象 ${object.objectRef} 的职责与 Backend Plan 不一致`);
+      const expectedContainerRef = planned.operation.parentSceneNodeRef
+        ? primaryObjectRefBySceneNode.get(planned.operation.parentSceneNodeRef) ?? null
+        : null;
+      if (object.containerObjectRef !== expectedContainerRef) fail(errors, "V2_OBJECT_MANIFEST_CONTAINER_MISMATCH", `Object Manifest 对象 ${object.objectRef} 的容器映射与 Backend Plan 不一致`);
+      const expectedStrategyIds = (planned.operation.loweringStrategies ?? []).map((strategy) => strategy.strategyId).sort();
+      if (JSON.stringify(object.loweringStrategyIds) !== JSON.stringify(expectedStrategyIds)) {
+        fail(errors, "V2_OBJECT_MANIFEST_LOWERING_MISMATCH", `Object Manifest 对象 ${object.objectRef} 的 lowering 策略映射与 Backend Plan 不一致`);
+      }
     }
     if (plan) {
       for (const objectRef of expectedByRef.keys()) {

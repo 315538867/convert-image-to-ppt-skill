@@ -19,8 +19,10 @@
     "test:core": "node --test tests/unit/*.test.mjs",
     "test:integration": "node tests/integration/smoke.mjs",
     "test:skill": "node scripts/test-built-skill.mjs",
+    "test:golden-corpus": "node scripts/check-golden-corpus.mjs",
+    "test:golden-corpus:full": "node scripts/check-golden-corpus.mjs --full",
     "test": "npm run preflight && npm run test:core && npm run test:integration && npm run build:skill && npm run test:skill",
-    "audit": "npm audit --audit-level=high"
+    "audit": "npm run test:golden-corpus && npm audit --audit-level=high"
   },
   "devDependencies": {
     "esbuild": "0.28.1"

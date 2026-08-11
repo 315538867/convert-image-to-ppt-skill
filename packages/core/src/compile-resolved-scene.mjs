@@ -1,4 +1,5 @@
 import { sha256Digest } from "./canonical.mjs";
+import { resolveTextMetrics } from "./text-metrics-resolver.mjs";
 import { validateV2Contracts } from "./validate-v2-contracts.mjs";
 
 const IDENTITY_2D = [1, 0, 0, 1, 0, 0];
@@ -154,6 +155,75 @@ function resourceDigestsIn(value, output = new Set()) {
   return output;
 }
 
+function pointerSegments(pointer) {
+  if (pointer === "") return [];
+  return pointer.slice(1).split("/").map((segment) => segment.replace(/~1/g, "/").replace(/~0/g, "~"));
+}
+
+function setValueAtPointer(value, pointer, nextValue) {
+  const segments = pointerSegments(pointer);
+  if (!segments.length) throw compileError("V2_SCENE_PATCH_ROOT_FORBIDDEN", "optimizer patch 不能替换整个节点", pointer || "/");
+
+  let current = value;
+  for (const segment of segments.slice(0, -1)) {
+    if (Array.isArray(current) && Number.isInteger(Number(segment)) && Number(segment) >= 0) current = current[Number(segment)];
+    else if (current && typeof current === "object") current = current[segment];
+    else throw compileError("V2_SCENE_PATCH_PATH_MISSING", `optimizer patch 引用未知参数: ${pointer}`, pointer);
+    if (current === undefined) throw compileError("V2_SCENE_PATCH_PATH_MISSING", `optimizer patch 引用未知参数: ${pointer}`, pointer);
+  }
+
+  const leaf = segments.at(-1);
+  if (Array.isArray(current) && Number.isInteger(Number(leaf)) && Number(leaf) >= 0) {
+    if (current[Number(leaf)] === undefined) throw compileError("V2_SCENE_PATCH_PATH_MISSING", `optimizer patch 引用未知参数: ${pointer}`, pointer);
+    current[Number(leaf)] = structuredClone(nextValue);
+    return;
+  }
+  if (!current || typeof current !== "object" || current[leaf] === undefined) {
+    throw compileError("V2_SCENE_PATCH_PATH_MISSING", `optimizer patch 引用未知参数: ${pointer}`, pointer);
+  }
+  current[leaf] = structuredClone(nextValue);
+}
+
+function patchProvenance(patch) {
+  return Object.fromEntries(Object.entries({
+    patchId: patch.patchId,
+    targetNodeRef: patch.targetNodeRef,
+    parameterPath: patch.parameterPath,
+    oldValue: structuredClone(patch.oldValue),
+    newValue: structuredClone(patch.newValue),
+    evidenceRefs: patch.evidenceRefs ? [...patch.evidenceRefs].sort() : undefined,
+    diagnosticRefs: [...patch.diagnosticRefs].sort(),
+    iteration: patch.iteration,
+    generator: patch.generator,
+    risk: patch.risk,
+  }).filter(([, value]) => value !== undefined));
+}
+
+function optimizerPatchesByNode(reconstructionSpec) {
+  const patches = new Map();
+  for (const patch of reconstructionSpec.optimizerPatches ?? []) {
+    const items = patches.get(patch.targetNodeRef) ?? [];
+    items.push(patch);
+    patches.set(patch.targetNodeRef, items);
+  }
+  for (const items of patches.values()) {
+    items.sort((left, right) => left.iteration - right.iteration || left.patchId.localeCompare(right.patchId));
+  }
+  return patches;
+}
+
+function applyOptimizerPatchOverlay(node, patchesByNode) {
+  const resolvedNode = structuredClone(node);
+  const applied = patchesByNode.get(node.id) ?? [];
+  for (const patch of applied) {
+    setValueAtPointer(resolvedNode, patch.parameterPath, patch.newValue);
+  }
+  return {
+    node: resolvedNode,
+    provenance: applied.map(patchProvenance),
+  };
+}
+
 function leafPointers(value, pointer, output = []) {
   if (Array.isArray(value)) {
     if (!value.length) output.push(pointer);
@@ -242,6 +312,7 @@ export function compileResolvedScene({
   const canvases = canvasByPage(sources);
   const resourceMap = resourcesByDigest(sources, reconstructionSpec, evidenceGraph);
   const evidence = evidenceIndex(evidenceGraph);
+  const patchesByNode = optimizerPatchesByNode(reconstructionSpec);
   const usedResources = new Set();
   const globalSceneNodeIds = new Set();
 
@@ -252,7 +323,8 @@ export function compileResolvedScene({
     const drawOrder = [];
     let nextDrawOrder = 0;
 
-    function compileNode(node, parent, nodePointer) {
+    function compileNode(authorNode, parent, nodePointer) {
+      const { node, provenance } = applyOptimizerPatchOverlay(authorNode, patchesByNode);
       if (!NODE_TYPES.has(node.type)) {
         throw compileError("V2_SCENE_NODE_TYPE_UNCONSUMED", `Core 没有消费节点类型 ${node.type}`, `${nodePointer}/type`);
       }
@@ -298,12 +370,17 @@ export function compileResolvedScene({
         ...leafPointers(node.content, `${nodePointer}/content`),
         ...leafPointers(node.editability, `${nodePointer}/editability`),
         ...leafPointers(node.evidenceRefs, `${nodePointer}/evidenceRefs`),
+        ...leafPointers(node.fitConstraints ?? [], `${nodePointer}/fitConstraints`),
+        ...leafPointers(node.lockedFields ?? [], `${nodePointer}/lockedFields`),
         `${nodePointer}/type`,
         `${nodePointer}/id`,
       ].sort();
       if (!consumedAuthorFields.length) {
         throw compileError("V2_SCENE_VISIBLE_FIELD_UNCONSUMED", `节点 ${node.id} 没有字段消费记录`, nodePointer);
       }
+      const textMetrics = node.type === "text"
+        ? resolveTextMetrics({ content: node.content, sourceNodeRef: node.id, evidenceGraph })
+        : undefined;
 
       const resolved = {
         sceneNodeId,
@@ -328,6 +405,11 @@ export function compileResolvedScene({
             .map((item) => ({ ...item }))
             .sort((left, right) => `${left.evidenceRef}:${left.role}`.localeCompare(`${right.evidenceRef}:${right.role}`)),
         },
+        ...(node.type === "text" ? {
+          ...(node.fitConstraints?.length ? { fitConstraints: structuredClone(node.fitConstraints) } : {}),
+          ...(textMetrics ? { textMetrics } : {}),
+        } : {}),
+        ...(provenance.length ? { patchProvenance: provenance } : {}),
         consumedAuthorFields,
       };
       nextDrawOrder += 1;

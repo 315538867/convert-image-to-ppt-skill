@@ -6,7 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { runV2Conversion } from "@image-to-ppt/cli";
+import { applyOptimizerCandidates, runBoundedOptimization, runV2Conversion } from "@image-to-ppt/cli";
 
 const fixtureUrl = new URL("../../packages/core/examples/v2/minimal-single-page.json", import.meta.url);
 
@@ -111,6 +111,7 @@ test("V2 runner 生成运行目录、Verification Result、Delivery Manifest 和
       workspaceDir,
       runId: "run-v2-smoke",
       visualThresholds: zeroThresholds,
+      allowLoweredThresholds: true,
     });
 
     assert.equal(conversion.status, "passed");
@@ -121,6 +122,10 @@ test("V2 runner 生成运行目录、Verification Result、Delivery Manifest 和
     assert.equal(fs.existsSync(conversion.deliveryManifest), true);
     assert.equal(fs.existsSync(conversion.sourceOverlayPath), true);
     assert.equal(fs.existsSync(conversion.reviewSheetPath), true);
+    const sourcePackage = JSON.parse(await fsp.readFile(conversion.sourcePackagePath, "utf8"));
+    assert.equal(sourcePackage.analysisDerivatives.some((derivative) => derivative.kind === "edge-map"), true);
+    assert.equal(sourcePackage.analysisDerivatives.some((derivative) => derivative.kind === "ocr-tokens"), true);
+    assert.equal(sourcePackage.localizedAssets.some((asset) => asset.purpose === "review-crop"), true);
     const manifest = JSON.parse(await fsp.readFile(conversion.deliveryManifest, "utf8"));
     assert.equal(manifest.status, "published");
     assert.equal(manifest.outputs.some((output) => output.role === "pptx-output"), true);
@@ -152,6 +157,76 @@ test("V2 runner 通过非渲染器生成的独立参考图验收", async () => {
     assert.equal(verification.pageResults.every((item) => item.status === "passed"), true);
     assert.equal(verification.evidenceResults.some((item) => item.subjectRef === "ev-blue-rect-color" && item.status === "passed"), true);
     assert.equal(verification.objectResults.some((item) => item.status === "passed"), true);
+  } finally {
+    await fsp.rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("V2 conversion 与 bounded optimizer 端到端闭环失败诊断、patch 迭代和最终发布", async () => {
+  const directory = await fsp.mkdtemp(path.join(os.tmpdir(), "img2ppt-v2-optimizer-e2e-"));
+  try {
+    const sourcePath = path.join(directory, "source.png");
+    await writeIndependentReferenceSource(sourcePath);
+    const initial = solidColorRectContracts();
+    const reconstructionSpec = initial.contracts.find((contract) => contract.contractKind === "reconstruction-spec");
+    const evidenceGraph = initial.contracts.find((contract) => contract.contractKind === "evidence-graph");
+    const rect = reconstructionSpec.pages[0].rootNode.children[0];
+    rect.appearance.fills[0].color.components = [1, 0, 0];
+    const contractsPath = path.join(directory, "v2-author-contracts.json");
+    const workspaceDir = path.join(directory, "workspace");
+    let firstFailure;
+    let runNumber = 0;
+    const result = await runBoundedOptimization({
+      initialState: { reconstructionSpec, evidenceGraph },
+      maxIterations: 2,
+      maxCandidates: 3,
+      verify: async (state) => {
+        const currentContractsPath = path.join(directory, `contracts-${runNumber}.json`);
+        runNumber += 1;
+        await fsp.writeFile(currentContractsPath, JSON.stringify({ schemaVersion: 2, contracts: [state.reconstructionSpec, state.evidenceGraph] }) + "\n");
+        try {
+          const conversion = await runV2Conversion({ sourcePath, contractsPath: currentContractsPath, workspaceDir, runId: `optimizer-e2e-${runNumber}` });
+          return JSON.parse(await fsp.readFile(conversion.verificationResultPath, "utf8"));
+        } catch (error) {
+          if (!error.verificationResult) throw error;
+          firstFailure ??= error.verificationResult;
+          return error.verificationResult;
+        }
+      },
+      generateCandidates: async () => [47 / 255, 128 / 255, 237 / 255].map((newValue, index) => ({
+        candidateId: `fix-blue-fill-${index}`,
+        componentRef: "component-scene-node-blue-rect",
+        confidence: 1 - index / 10,
+        metricsBefore: [{ name: "color-delta-e", value: 100, threshold: 1, unit: "delta-e", direction: "lower-is-better" }],
+        patch: {
+          targetNodeRef: "blue-rect",
+          parameterPath: `/appearance/fills/0/color/components/${index}`,
+          oldValue: [1, 0, 0][index],
+          newValue,
+          evidenceRefs: ["ev-blue-rect-color"],
+          diagnosticRefs: ["visual-color-failure"],
+          generator: "e2e-test-optimizer",
+          risk: "low",
+        },
+      })),
+      applyCandidates: async ({ state, candidates, iteration }) => {
+        const applied = applyOptimizerCandidates({ reconstructionSpec: state.reconstructionSpec, candidates, iteration });
+        return {
+          state: { ...state, reconstructionSpec: applied.reconstructionSpec },
+          candidates: applied.candidates,
+          appliedPatchRefs: applied.appliedPatchRefs,
+        };
+      },
+    });
+    assert.equal(firstFailure.status, "failed-quality-gate");
+    assert.ok(firstFailure.failures.length > 0);
+    assert.equal(result.status, "passed");
+    assert.equal(result.stopReason, "successful-iteration");
+    assert.equal(result.history.length, 1);
+    assert.equal(result.history[0].candidates.every((candidate) => candidate.status === "applied"), true);
+    assert.equal(result.verificationResult.status, "passed");
+    await fsp.writeFile(contractsPath, JSON.stringify({ schemaVersion: 2, contracts: [result.state.reconstructionSpec, result.state.evidenceGraph] }) + "\n");
+    assert.equal(result.state.reconstructionSpec.optimizerPatches.length, 3);
   } finally {
     await fsp.rm(directory, { recursive: true, force: true });
   }

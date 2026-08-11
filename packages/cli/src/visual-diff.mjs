@@ -68,6 +68,30 @@ function luminance(rgb, pixelIndex, channels) {
   return 0.2126 * rgb[offset] + 0.7152 * rgb[offset + 1] + 0.0722 * rgb[offset + 2];
 }
 
+function srgbToLabComponent(value) {
+  const normalized = value / 255;
+  const linear = normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+  return linear;
+}
+
+function labPivot(value) {
+  return value > 216 / 24389 ? Math.cbrt(value) : (24389 * value + 16) / 116;
+}
+
+function rgbToLab(red, green, blue) {
+  const r = srgbToLabComponent(red);
+  const g = srgbToLabComponent(green);
+  const b = srgbToLabComponent(blue);
+  const x = labPivot((0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047);
+  const y = labPivot(0.2126 * r + 0.7152 * g + 0.0722 * b);
+  const z = labPivot((0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883);
+  return { l: 116 * y - 16, a: 500 * (x - y), b: 200 * (y - z) };
+}
+
+function deltaE76(left, right) {
+  return Math.hypot(left.l - right.l, left.a - right.a, left.b - right.b);
+}
+
 function edgeMap(image) {
   const result = new Float32Array(image.width * image.height);
   for (let y = 1; y < image.height - 1; y += 1) {
@@ -175,6 +199,7 @@ function compareRegion(source, rendered, perceptualSource, perceptualRendered, s
   const exclusions = normalizedExclusions(region, source.width, source.height);
   let colorDifference = 0;
   let rawColorDifference = 0;
+  let deltaESum = 0;
   let pixelCount = 0;
   const flatColor = region?.pixelMode === "flat-color" || category === "color";
   for (let y = bounds.y0; y < bounds.y1; y += 1) {
@@ -187,6 +212,10 @@ function compareRegion(source, rendered, perceptualSource, perceptualRendered, s
       rawColorDifference += Math.abs(source.data[sourceOffset] - rendered.data[renderedOffset]);
       rawColorDifference += Math.abs(source.data[sourceOffset + 1] - rendered.data[renderedOffset + 1]);
       rawColorDifference += Math.abs(source.data[sourceOffset + 2] - rendered.data[renderedOffset + 2]);
+      deltaESum += deltaE76(
+        rgbToLab(source.data[sourceOffset], source.data[sourceOffset + 1], source.data[sourceOffset + 2]),
+        rgbToLab(rendered.data[renderedOffset], rendered.data[renderedOffset + 1], rendered.data[renderedOffset + 2]),
+      );
       const comparisonSource = flatColor ? source : perceptualSource;
       const comparisonRendered = flatColor ? rendered : perceptualRendered;
       colorDifference += Math.abs(comparisonSource.data[sourceOffset] - comparisonRendered.data[renderedOffset]);
@@ -199,6 +228,7 @@ function compareRegion(source, rendered, perceptualSource, perceptualRendered, s
   const edge = tolerantEdgeF1(sourceEdges, renderedEdges, source.width, source.height, bounds, exclusions, tolerance);
   return {
     rawPixelSimilarity: pixelCount === 0 ? 1 : 1 - rawColorDifference / (pixelCount * 3 * 255),
+    meanColorDeltaE: pixelCount === 0 ? 0 : deltaESum / pixelCount,
     pixelSimilarity: pixelCount === 0 ? 1 : 1 - colorDifference / (pixelCount * 3 * 255),
     edgeSimilarity: edge.similarity,
     edgeSourcePixelCount: edge.sourceCount,

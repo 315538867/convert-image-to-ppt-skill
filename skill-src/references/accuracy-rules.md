@@ -61,6 +61,18 @@
 
 配置视觉能力时，在局部验证后同时审查源图和渲染预览。重新读取精确文字，并检查换行、局部颜色、基线、裁切、蒙版、渐变、圆角、间距和重叠。所有错误或违规都视为质量门槛失败。若大量无关对象出现相同且不合理的失败模式，或报告与 OOXML 证据矛盾，必须先检查验证器，再修改 authoring 数据。
 
+## 组件级门与 Golden Corpus
+
+Verification Result 必须同时记录页面、组件、Evidence、Scene Node、Backend Plan operation 和输出对象的指标与责任链。全局像素或边缘分数不能掩盖标题、表格单元格、连接线端点、渐变采样、阴影或对象层级的失败。
+
+独立 golden corpus 必须覆盖文字密集、表格、流程图、图表、透明、渐变、阴影、多页模板和低清晰输入。每个样例都必须拥有 corpus 内的独立输入图、组件阈值、全局阈值，以及 editability、Object Manifest、package safety 三项必需门。renderer 自己生成的参考图仅能验证一致性，不能证明图片还原能力。
+
+## 反规避
+
+禁止降低阈值、裁剪失败区域、遮盖源图细节、删除对象、修改 canonical source facts，或以整页截图、文字截图、简单图标截图和未声明 raster fallback 换取通过。任何此类行为都必须由 Verification Result 标记 anti-cheat 失败，且不得发布 Delivery Manifest。
+
+Optimizer 只能在作者声明的可调范围内应用独立 patch。每轮都要比较局部和全局指标；任何关键组件或 editability regression 都必须回退，不得以总体分数改善宣告成功。
+
 ## 可编辑性
 
 根据已选择的表达方式计算可编辑覆盖率。原生文字、形状、连接线和受支持路径计为可编辑；SVG 和栅格表达不计。`simpleIconMustBeEditable` 为 true 时，拒绝所有由位图支撑的 `icon`；复杂栅格符号必须如实表示为 `image`。拒绝把不支持的原生能力静默降级为截图。

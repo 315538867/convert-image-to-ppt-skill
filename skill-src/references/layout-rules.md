@@ -20,11 +20,15 @@ TextModel 同时负责字形并集 `inkBox` 和 `boundaryPolicy.minimumClearance
 
 不得仅因共用基线而把无关标签合并到同一文字层，也不得把一句话按单词拆成多个文字层。不得用空格或制表符布局，不得用自动缩小或自动换行补偿错误测量。
 
+文字拟合只能使用作者在 `fitConstraints` 中声明的字体候选、字号、tracking、line-height、baseline shift、段落间距和文本框策略。最终参数由 Backend Plan 固化，Renderer 只执行计划，不能重新测量源图或猜测换行。中英文数字混排、低清晰文字和多行段落都应保留 token、视觉行和 baseline Evidence。
+
 ## 重复行、列表与表格
 
 每个重复项都表示为独立组件，其图标、标签、描述、分隔线和背景放在该组件下。通过框和约束保留重复间距。
 
 列表使用包含可编辑子节点的 `list/list-item` 表达。表格使用 `table/table-row/table-cell` 表达，其子节点可以是边框、填充、文字、图标或图片。编译器把全部可见内容降为 `text`、`path`、`image`、`connector` 和结构性 `group`；后端不包含表格或列表专用布局规则。
+
+流程图与连接线必须显式记录节点锚点、端点、路由、箭头和层叠关系，不得用相邻位置推断连接关系。图表必须表达可见的轴、网格、标签、序列和 primitive；底层数据无法证明时保持 `dataSemantics: "unknown"`。复杂渐变、透明、阴影、clip/mask 和多重边框需要以明确 appearance 参数和 effect bounds 表达，允许由后端选择可编辑 primitive lowering 或带误差界限的 OOXML postprocess，禁止静默纯色化或删除效果。
 
 ## 绘制顺序
 

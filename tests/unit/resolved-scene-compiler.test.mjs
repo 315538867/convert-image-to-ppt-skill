@@ -131,6 +131,64 @@ test("Resolved Scene 为文字保留策略候选并记录每个作者叶子字�
   assert.equal(title.resolvedContent.text, "可编辑标题");
 });
 
+test("Resolved Scene 应用 optimizer patch overlay 并记录 patch provenance", () => {
+  const bundle = readFixture();
+  const { reconstruction } = contracts(bundle);
+  const title = findAuthorNode(reconstruction.pages[0].rootNode, "title");
+  const parameterPath = "/content/runs/0/style/tracking/value";
+  const oldValue = title.content.runs[0].style.tracking.value;
+
+  title.fitConstraints = [
+    {
+      parameterPath,
+      defaultValue: oldValue,
+      range: { min: 0, max: 4, step: 0.25 },
+      unit: "px",
+      priority: 10,
+      locked: false,
+      evidenceRefs: ["ev-title-ink"],
+      editabilityAspects: ["text-style"],
+      forbiddenFallbacks: ["text-raster"],
+    },
+  ];
+  reconstruction.optimizerPatches = [
+    {
+      patchId: "patch-title-tracking",
+      targetNodeRef: "title",
+      parameterPath,
+      oldValue,
+      newValue: 2.25,
+      evidenceRefs: ["ev-title-ink"],
+      diagnosticRefs: ["diag-title-ink"],
+      iteration: 1,
+      generator: "fixture-optimizer",
+      risk: "low",
+    },
+  ];
+
+  const scene = compile(bundle);
+  const result = validateV2Contracts({ schemaVersion: 2, contracts: [...bundle.contracts, scene] });
+  const titleSceneNode = findSceneNode(scene, "title");
+
+  assert.equal(result.ok, true, JSON.stringify(result.errors, null, 2));
+  assert.equal(titleSceneNode.resolvedContent.runs[0].style.tracking.value, 2.25);
+  assert.equal(title.content.runs[0].style.tracking.value, oldValue);
+  assert.deepEqual(titleSceneNode.patchProvenance, [
+    {
+      patchId: "patch-title-tracking",
+      targetNodeRef: "title",
+      parameterPath,
+      oldValue,
+      newValue: 2.25,
+      evidenceRefs: ["ev-title-ink"],
+      diagnosticRefs: ["diag-title-ink"],
+      iteration: 1,
+      generator: "fixture-optimizer",
+      risk: "low",
+    },
+  ]);
+});
+
 test("Core 包不依赖 PPTX 后端、图片解码库或 Codex 宿主运行库", () => {
   const packageJson = JSON.parse(fs.readFileSync(corePackageUrl, "utf8"));
   const dependencies = Object.keys(packageJson.dependencies ?? {});

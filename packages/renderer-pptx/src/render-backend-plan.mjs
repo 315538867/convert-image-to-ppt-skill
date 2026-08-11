@@ -67,11 +67,7 @@ function fillConfig(appearance, operationId) {
   throw new Error(`操作 ${operationId} 的图片图案填充未被 Backend Plan lower`);
 }
 
-function strokeConfig(appearance, operationId, { primary = true } = {}) {
-  const strokes = appearance.strokes.filter((stroke) => !primary || stroke.side === "all");
-  if (!strokes.length) return { style: "solid", fill: "none", width: 0 };
-  if (strokes.length > 1) throw new Error(`操作 ${operationId} 的多重描边未被 Backend Plan lower`);
-  const stroke = strokes[0];
+function strokeConfigFor(stroke, appearance, operationId) {
   if (stroke.paint.kind !== "solid") throw new Error(`操作 ${operationId} 的渐变描边未被 Backend Plan lower`);
   const pattern = stroke.dash.pattern;
   return {
@@ -81,22 +77,11 @@ function strokeConfig(appearance, operationId, { primary = true } = {}) {
   };
 }
 
-function shadowConfig(appearance, operationId) {
-  if (!appearance.effects.length) return undefined;
-  if (appearance.effects.length > 1 || appearance.effects[0].kind !== "outer-shadow") {
-    throw new Error(`操作 ${operationId} 的效果栈没有完整的 Renderer 执行器`);
-  }
-  const effect = appearance.effects[0];
-  const offsetX = toPx(effect.offsetX);
-  const offsetY = toPx(effect.offsetY);
-  return {
-    type: "outer",
-    color: rgb(effect.color),
-    opacity: effect.color.alpha ?? 1,
-    blur: toPx(effect.blurRadius),
-    distance: Math.hypot(offsetX, offsetY),
-    angle: Math.atan2(offsetY, offsetX) * 180 / Math.PI,
-  };
+function strokeConfig(appearance, operationId, { primary = true } = {}) {
+  const strokes = appearance.strokes.filter((stroke) => !primary || stroke.side === "all");
+  if (!strokes.length) return { style: "solid", fill: "none", width: 0 };
+  if (strokes.length > 1) throw new Error(`操作 ${operationId} 的多重描边未被 Backend Plan lower`);
+  return strokeConfigFor(strokes[0], appearance, operationId);
 }
 
 function geometryName(content) {
@@ -113,11 +98,8 @@ function geometryName(content) {
   return geometry;
 }
 
-function cornerRadius(content) {
-  if (!content.cornerRadii) return undefined;
-  const values = Object.values(content.cornerRadii).map(toPx);
-  if (!values.every((value) => Math.abs(value - values[0]) < 1e-8)) throw new Error("非对称圆角必须在 Backend Plan 中 lower 为 path");
-  return values[0];
+function approximateCornerRadius(content) {
+  return Math.min(...Object.values(content.cornerRadii).map(toPx));
 }
 
 function textSlice(content, range) {
@@ -134,6 +116,35 @@ function runStyle(run) {
     italic: style.fontStyle === "italic",
     color: rgb(style.color),
   };
+}
+
+function contentWithTextFitting(content, decision) {
+  if (!decision) return content;
+  const fitted = structuredClone(content);
+  const fontFamilies = [...decision.fontFamilies, ...(decision.fallbackFontFamilies ?? [])];
+  fitted.runs.forEach((run) => {
+    run.style.fontFamilies = fontFamilies;
+    run.style.fontSize = structuredClone(decision.fontSize);
+    run.style.tracking = structuredClone(decision.tracking);
+    run.style.baselineShift = structuredClone(decision.baselineShift);
+  });
+  fitted.paragraphs.forEach((paragraph) => {
+    if (decision.paragraphSpacingBefore) paragraph.spacingBefore = structuredClone(decision.paragraphSpacingBefore);
+    if (decision.paragraphSpacingAfter) paragraph.spacingAfter = structuredClone(decision.paragraphSpacingAfter);
+    paragraph.lineSpacing = { mode: "exact", value: toPx(decision.lineHeight) };
+  });
+  if (decision.textBoxStrategy === "fixed-bounds" || decision.textBoxStrategy === "auto-fit-disabled") {
+    fitted.layout.overflow = "clip";
+  }
+  if (decision.anchor) {
+    const vertical = {
+      "top-left": "top", top: "top", "top-right": "top",
+      "middle-left": "middle", center: "middle", "middle-right": "middle",
+      "bottom-left": "bottom", bottom: "bottom", "bottom-right": "bottom", baseline: "top",
+    }[decision.anchor];
+    fitted.layout.verticalAlign = vertical;
+  }
+  return fitted;
 }
 
 function textValue(content) {
@@ -179,20 +190,138 @@ function pointToLocal(point, frame) {
   return { x: point.x - frame.x, y: point.y - frame.y };
 }
 
-function pathCommands(content, frame) {
-  return content.commands.map((command) => {
-    if (command.command === "move-to") return { moveTo: pointToLocal(command.to, frame) };
-    if (command.command === "line-to") return { lineTo: pointToLocal(command.to, frame) };
-    if (command.command === "cubic-to") return {
-      cubicBezierTo: {
-        control1: pointToLocal(command.control1, frame),
-        control2: pointToLocal(command.control2, frame),
-        end: pointToLocal(command.to, frame),
-      },
+function vectorAngle(from, to) {
+  return Math.atan2(from.x * to.y - from.y * to.x, from.x * to.x + from.y * to.y);
+}
+
+function ellipsePoint(center, radiusX, radiusY, rotation, angle) {
+  const x = radiusX * Math.cos(angle);
+  const y = radiusY * Math.sin(angle);
+  return {
+    x: center.x + x * Math.cos(rotation) - y * Math.sin(rotation),
+    y: center.y + x * Math.sin(rotation) + y * Math.cos(rotation),
+  };
+}
+
+function arcToCubicSegments(from, command, frame) {
+  const to = pointToLocal(command.to, frame);
+  let radiusX = Math.abs(toPx(command.rx));
+  let radiusY = Math.abs(toPx(command.ry));
+  if (!radiusX || !radiusY || (from.x === to.x && from.y === to.y)) return [{ lineTo: to }];
+
+  const rotation = command.rotationDeg * Math.PI / 180;
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  const dx = (from.x - to.x) / 2;
+  const dy = (from.y - to.y) / 2;
+  const localStart = { x: cos * dx + sin * dy, y: -sin * dx + cos * dy };
+  const lambda = localStart.x ** 2 / radiusX ** 2 + localStart.y ** 2 / radiusY ** 2;
+  if (lambda > 1) {
+    const scale = Math.sqrt(lambda);
+    radiusX *= scale;
+    radiusY *= scale;
+  }
+
+  const numerator = radiusX ** 2 * radiusY ** 2 - radiusX ** 2 * localStart.y ** 2 - radiusY ** 2 * localStart.x ** 2;
+  const denominator = radiusX ** 2 * localStart.y ** 2 + radiusY ** 2 * localStart.x ** 2;
+  const coefficient = (command.largeArc === command.sweep ? -1 : 1) * Math.sqrt(Math.max(0, numerator / denominator));
+  const localCenter = {
+    x: coefficient * radiusX * localStart.y / radiusY,
+    y: coefficient * -radiusY * localStart.x / radiusX,
+  };
+  const center = {
+    x: cos * localCenter.x - sin * localCenter.y + (from.x + to.x) / 2,
+    y: sin * localCenter.x + cos * localCenter.y + (from.y + to.y) / 2,
+  };
+  const startVector = { x: (localStart.x - localCenter.x) / radiusX, y: (localStart.y - localCenter.y) / radiusY };
+  const endVector = { x: (-localStart.x - localCenter.x) / radiusX, y: (-localStart.y - localCenter.y) / radiusY };
+  const startAngle = vectorAngle({ x: 1, y: 0 }, startVector);
+  let delta = vectorAngle(startVector, endVector);
+  if (!command.sweep && delta > 0) delta -= Math.PI * 2;
+  if (command.sweep && delta < 0) delta += Math.PI * 2;
+
+  const segments = [];
+  const count = Math.ceil(Math.abs(delta) / (Math.PI / 2));
+  for (let index = 0; index < count; index += 1) {
+    const angle1 = startAngle + delta * index / count;
+    const angle2 = startAngle + delta * (index + 1) / count;
+    const alpha = 4 / 3 * Math.tan((angle2 - angle1) / 4);
+    const point2 = ellipsePoint(center, radiusX, radiusY, rotation, angle2);
+    const control1 = ellipsePoint(center, radiusX, radiusY, rotation, angle1);
+    const control2 = ellipsePoint(center, radiusX, radiusY, rotation, angle2);
+    const derivative1 = {
+      x: -radiusX * Math.sin(angle1) * cos - radiusY * Math.cos(angle1) * sin,
+      y: -radiusX * Math.sin(angle1) * sin + radiusY * Math.cos(angle1) * cos,
     };
-    if (command.command === "close") return { close: {} };
-    throw new Error(`path 命令 ${command.command} 尚未由 Backend Plan lower`);
-  });
+    const derivative2 = {
+      x: -radiusX * Math.sin(angle2) * cos - radiusY * Math.cos(angle2) * sin,
+      y: -radiusX * Math.sin(angle2) * sin + radiusY * Math.cos(angle2) * cos,
+    };
+    segments.push({
+      cubicBezTo: {
+        x1: control1.x + alpha * derivative1.x,
+        y1: control1.y + alpha * derivative1.y,
+        x2: control2.x - alpha * derivative2.x,
+        y2: control2.y - alpha * derivative2.y,
+        x: point2.x,
+        y: point2.y,
+      },
+    });
+  }
+  return segments;
+}
+
+function pathCommands(content, frame) {
+  const commands = [];
+  let current = { x: 0, y: 0 };
+  let subpathStart = current;
+  for (const command of content.commands) {
+    if (command.command === "move-to") {
+      current = pointToLocal(command.to, frame);
+      subpathStart = current;
+      commands.push({ moveTo: current });
+    } else if (command.command === "line-to") {
+      current = pointToLocal(command.to, frame);
+      commands.push({ lineTo: current });
+    } else if (command.command === "quadratic-to") {
+      const control = pointToLocal(command.control, frame);
+      const end = pointToLocal(command.to, frame);
+      commands.push({
+        quadBezTo: {
+          x1: control.x,
+          y1: control.y,
+          x: end.x,
+          y: end.y,
+        },
+      });
+      current = end;
+    } else if (command.command === "cubic-to") {
+      const end = pointToLocal(command.to, frame);
+      const control1 = pointToLocal(command.control1, frame);
+      const control2 = pointToLocal(command.control2, frame);
+      commands.push({
+        cubicBezTo: {
+          x1: control1.x,
+          y1: control1.y,
+          x2: control2.x,
+          y2: control2.y,
+          x: end.x,
+          y: end.y,
+        },
+      });
+      current = end;
+    } else if (command.command === "arc-to") {
+      const segments = arcToCubicSegments(current, command, frame);
+      commands.push(...segments);
+      current = pointToLocal(command.to, frame);
+    } else if (command.command === "close") {
+      commands.push({ close: {} });
+      current = subpathStart;
+    } else {
+      throw new Error(`path 命令 ${command.command} 尚未由 Backend Plan lower`);
+    }
+  }
+  return commands;
 }
 
 function resourceEntry(resources, digest) {
@@ -234,23 +363,35 @@ function connectorPoints(operation, operationBySceneNode) {
 
 function renderOperation(slide, operation, resources, operationBySceneNode) {
   const expected = primaryObject(operation);
+  if (operation.parameters.nodeType === "chart") {
+    const content = operation.parameters.content;
+    if (content.dataSemantics === "unknown" && content.series.length) {
+      throw new Error(`操作 ${operation.operationId} 将未知图表数据伪造成 series`);
+    }
+    if (!expected?.virtual) {
+      throw new Error(`操作 ${operation.operationId} 的图表必须 lower 为已声明的可编辑 primitive，不能物化 native chart`);
+    }
+  }
   if (!expected || expected.virtual) return;
   const position = boxToPosition(expected.bbox);
   const appearance = operation.parameters.appearance;
-  const content = operation.parameters.content;
+  const content = operation.parameters.nodeType === "text"
+    ? contentWithTextFitting(operation.parameters.content, operation.textFitting)
+    : operation.parameters.content;
   const common = {
     name: expected.objectRef,
     position,
     fill: fillConfig(appearance, operation.operationId),
-    line: strokeConfig(appearance, operation.operationId),
-    ...(shadowConfig(appearance, operation.operationId) ? { shadow: shadowConfig(appearance, operation.operationId) } : {}),
+    line: operation.expectedObjects.some((object) => object.role === "stroke-primitive")
+      ? { style: "solid", fill: "none", width: 0 }
+      : strokeConfig(appearance, operation.operationId),
   };
 
   if (operation.parameters.nodeType === "shape" || operation.parameters.nodeType === "table-cell") {
     const shape = slide.shapes.add({
       ...common,
       geometry: operation.parameters.nodeType === "table-cell" ? "rect" : geometryName(content),
-      ...(operation.parameters.nodeType === "shape" && cornerRadius(content) !== undefined ? { borderRadius: cornerRadius(content) } : {}),
+      ...(operation.parameters.nodeType === "shape" && content.cornerRadii ? { borderRadius: approximateCornerRadius(content) } : {}),
     });
     shape.name = expected.objectRef;
   } else if (operation.parameters.nodeType === "text") {
@@ -318,7 +459,7 @@ function renderOperation(slide, operation, resources, operationBySceneNode) {
       name: border.objectRef,
       position: borderPosition,
       fill: { type: "none" },
-      line: strokeConfig({ ...appearance, strokes: [stroke] }, operation.operationId, { primary: false }),
+      line: strokeConfigFor(stroke, appearance, operation.operationId),
       customPaths: [{
         width: borderPosition.width,
         height: borderPosition.height,
@@ -326,6 +467,21 @@ function renderOperation(slide, operation, resources, operationBySceneNode) {
       }],
     });
     shape.name = border.objectRef;
+  }
+
+  const allStrokes = appearance.strokes.filter((stroke) => stroke.side === "all");
+  for (const [index, primitive] of operation.expectedObjects.filter((object) => object.role === "stroke-primitive" && !object.virtual).entries()) {
+    const stroke = allStrokes[index + 1];
+    if (!stroke) throw new Error(`操作 ${operation.operationId} 缺少第 ${index + 2} 条描边参数`);
+    const shape = slide.shapes.add({
+      name: primitive.objectRef,
+      position,
+      fill: { type: "none" },
+      line: strokeConfigFor(stroke, appearance, operation.operationId),
+      geometry: geometryName(content),
+      ...(content.cornerRadii ? { borderRadius: approximateCornerRadius(content) } : {}),
+    });
+    shape.name = primitive.objectRef;
   }
 }
 
@@ -345,6 +501,102 @@ function objectElements(document) {
 
 function xfrmOf(element) {
   return Array.from(element.getElementsByTagNameNS(A_NS, "xfrm"))[0];
+}
+
+function shapePropertiesOf(element) {
+  return Array.from(element.getElementsByTagNameNS(P_NS, "spPr"))[0];
+}
+
+function appendPlannedImageOpacity(document, element, operation) {
+  if (operation.parameters.nodeType !== "image") return;
+  const blip = Array.from(element.getElementsByTagNameNS(A_NS, "blip"))[0];
+  if (!blip) throw new Error(`对象 ${operation.operationId} 缺少可写入透明度的 a:blip`);
+
+  const opacity = operation.parameters.appearance.opacity;
+  const existing = Array.from(blip.childNodes).find((node) => node.nodeType === 1 && node.localName === "alphaModFix");
+  if (opacity >= 1) {
+    if (existing) blip.removeChild(existing);
+    return;
+  }
+  const alpha = existing ?? document.createElementNS(A_NS, "a:alphaModFix");
+  alpha.setAttribute("amt", String(Math.round(Math.max(0, opacity) * 100000)));
+  if (!existing) blip.appendChild(alpha);
+}
+
+function ooxmlArrowType(marker) {
+  return {
+    triangle: "triangle",
+    stealth: "stealth",
+    diamond: "diamond",
+    oval: "oval",
+    "open-arrow": "arrow",
+  }[marker];
+}
+
+function appendPlannedConnectorArrows(document, element, operation) {
+  if (operation.parameters.nodeType !== "connector") return;
+  const line = Array.from(element.getElementsByTagNameNS(A_NS, "ln"))[0];
+  if (!line) throw new Error(`对象 ${operation.operationId} 缺少可写入箭头的 a:ln`);
+  const stroke = operation.parameters.appearance.strokes.find((candidate) => candidate.startMarker !== "none" || candidate.endMarker !== "none")
+    ?? operation.parameters.appearance.strokes[0];
+  if (!stroke) return;
+
+  for (const [nodeName, marker] of [["headEnd", stroke.startMarker], ["tailEnd", stroke.endMarker]]) {
+    const existing = Array.from(line.childNodes).find((node) => node.nodeType === 1 && node.localName === nodeName);
+    const type = ooxmlArrowType(marker);
+    if (!type) {
+      if (existing) line.removeChild(existing);
+      continue;
+    }
+    const arrow = existing ?? document.createElementNS(A_NS, `a:${nodeName}`);
+    arrow.setAttribute("type", type);
+    if (!existing) line.appendChild(arrow);
+  }
+}
+
+function appendEffectColor(document, parent, color, inheritedOpacity) {
+  const colorNode = document.createElementNS(A_NS, "a:srgbClr");
+  colorNode.setAttribute("val", rgb(color).slice(1));
+  const opacity = (color.alpha ?? 1) * inheritedOpacity;
+  if (opacity < 1) {
+    const alpha = document.createElementNS(A_NS, "a:alpha");
+    alpha.setAttribute("val", String(Math.round(opacity * 100000)));
+    colorNode.appendChild(alpha);
+  }
+  parent.appendChild(colorNode);
+}
+
+function appendPlannedEffects(document, element, operation) {
+  const effects = operation.parameters.appearance.effects;
+  if (!effects.length) return;
+  const shapeProperties = shapePropertiesOf(element);
+  if (!shapeProperties) throw new Error(`对象 ${operation.operationId} 缺少可写入效果的 p:spPr`);
+
+  const unsupported = effects.filter((effect) => !["outer-shadow", "glow"].includes(effect.kind));
+  if (unsupported.length) {
+    throw new Error(`操作 ${operation.operationId} 的效果尚未被 OOXML 后处理支持: ${unsupported.map((effect) => effect.kind).join(", ")}`);
+  }
+
+  Array.from(shapeProperties.getElementsByTagNameNS(A_NS, "effectLst")).forEach((node) => node.remove());
+  const effectList = document.createElementNS(A_NS, "a:effectLst");
+  for (const effect of effects) {
+    if (effect.kind === "outer-shadow") {
+      const shadow = document.createElementNS(A_NS, "a:outerShdw");
+      shadow.setAttribute("blurRad", String(Math.round(toPx(effect.blurRadius) * EMU_PER_PX)));
+      shadow.setAttribute("dist", String(Math.round(Math.hypot(toPx(effect.offsetX), toPx(effect.offsetY)) * EMU_PER_PX)));
+      shadow.setAttribute("dir", String(Math.round((Math.atan2(toPx(effect.offsetY), toPx(effect.offsetX)) * 180 / Math.PI + 360) % 360 * 60000)));
+      shadow.setAttribute("algn", "ctr");
+      shadow.setAttribute("rotWithShape", "0");
+      appendEffectColor(document, shadow, effect.color, operation.parameters.appearance.opacity);
+      effectList.appendChild(shadow);
+    } else {
+      const glow = document.createElementNS(A_NS, "a:glow");
+      glow.setAttribute("rad", String(Math.round(toPx(effect.radius) * EMU_PER_PX)));
+      appendEffectColor(document, glow, effect.color, operation.parameters.appearance.opacity);
+      effectList.appendChild(glow);
+    }
+  }
+  shapeProperties.appendChild(effectList);
 }
 
 function patchPlannedOoxml(outputPath, plan) {
@@ -370,8 +622,12 @@ function patchPlannedOoxml(outputPath, plan) {
           if (Math.abs(angle) > 1e-8) xfrm.setAttribute("rot", String(Math.round(angle * 60000)));
           if (a * d - b * c < 0) xfrm.setAttribute("flipV", "1");
         }
+        appendPlannedImageOpacity(document, element, planned.operation);
+        appendPlannedConnectorArrows(document, element, planned.operation);
+        appendPlannedEffects(document, element, planned.operation);
         if (planned.operation.parameters.nodeType === "text") {
-          const runs = planned.operation.parameters.content.runs;
+          const content = contentWithTextFitting(planned.operation.parameters.content, planned.operation.textFitting);
+          const runs = content.runs;
           const runProperties = Array.from(element.getElementsByTagNameNS(A_NS, "rPr"));
           runProperties.forEach((properties, index) => {
             const style = runs[Math.min(index, runs.length - 1)]?.style;
@@ -412,6 +668,8 @@ function actualFeatures(element) {
   if (kind === "text" && Array.from(element.getElementsByTagNameNS(A_NS, "rPr")).some((node) => node.hasAttribute("spc") || node.hasAttribute("baseline"))) features.push("manual-text-metrics");
   if (element.getElementsByTagNameNS(A_NS, "custGeom").length) features.push("custom-geometry");
   if (element.getElementsByTagNameNS(A_NS, "srcRect").length) features.push("picture-crop");
+  if (element.getElementsByTagNameNS(A_NS, "alphaModFix").length) features.push("picture-opacity");
+  if (element.getElementsByTagNameNS(A_NS, "headEnd").length || element.getElementsByTagNameNS(A_NS, "tailEnd").length) features.push("connector-arrows");
   if (element.getElementsByTagNameNS(A_NS, "effectLst").length) features.push("effect-list");
   if (kind === "group") features.push("grouping");
   if (kind === "table") features.push("native-table");
@@ -473,15 +731,26 @@ export async function inspectBackendPlanObjects(pptxPath, plan) {
 
   const objects = [];
   const expectedNames = new Set();
+  const primaryObjectRefBySceneNode = new Map(plan.operations.map((operation) => [
+    operation.sceneNodeRef,
+    operation.expectedObjects.find((expected) => expected.role === "primary")?.objectRef ?? null,
+  ]));
   for (const operation of plan.operations) {
     for (const expected of operation.expectedObjects) {
       expectedNames.add(expected.objectRef);
+      const containerObjectRef = operation.parentSceneNodeRef
+        ? primaryObjectRefBySceneNode.get(operation.parentSceneNodeRef) ?? null
+        : null;
+      const loweringStrategyIds = (operation.loweringStrategies ?? []).map((strategy) => strategy.strategyId).sort();
       if (expected.virtual) {
         objects.push({
           objectRef: expected.objectRef,
           sceneNodeId: operation.sceneNodeRef,
           operationId: operation.operationId,
           slideId: operation.pageId,
+          expectedRole: expected.role,
+          containerObjectRef,
+          loweringStrategyIds,
           virtual: true,
           ooxmlObjectIds: [],
           nativeObjectKind: "virtual",
@@ -502,6 +771,9 @@ export async function inspectBackendPlanObjects(pptxPath, plan) {
         sceneNodeId: operation.sceneNodeRef,
         operationId: operation.operationId,
         slideId: actual.pageId,
+        expectedRole: expected.role,
+        containerObjectRef,
+        loweringStrategyIds,
         virtual: false,
         ooxmlObjectIds: [elementId(actual.element)].filter(Boolean),
         nativeObjectKind: nativeKind(actual.element),

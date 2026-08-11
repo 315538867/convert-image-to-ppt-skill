@@ -5,7 +5,11 @@ import path from "node:path";
 import test from "node:test";
 import sharp from "sharp";
 import { validateV2Contracts } from "@image-to-ppt/core";
-import { normalizeSource, readCanonicalPixels } from "../../packages/cli/src/source-normalizer.mjs";
+import {
+  assertFreshAnalysisDerivativeCache,
+  normalizeSource,
+  readCanonicalPixels,
+} from "../../packages/cli/src/source-normalizer.mjs";
 
 async function withTemporaryDirectory(run) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "img2ppt-source-normalizer-"));
@@ -33,8 +37,10 @@ test("Source Normalizer 只应用一次 EXIF 方向并生成内容寻址派生�
       tileSize: 8,
       reviewRegions: [{ id: "title", x: 1, y: 1, width: 5, height: 5 }],
       maskPaths: [{ id: "alpha", path: maskPath }],
+      analysisDerivatives: true,
     });
     const sourcePackage = result.sourcePackage;
+    const derivativeKinds = new Set(sourcePackage.analysisDerivatives.map((derivative) => derivative.kind));
 
     assert.deepEqual(sourcePackage.pages[0].canvas, { width: 20, height: 10, unit: "px" });
     assert.deepEqual(sourcePackage.pages[0].orientation, { original: 6, applied: true });
@@ -45,6 +51,25 @@ test("Source Normalizer 只应用一次 EXIF 方向并生成内容寻址派生�
     assert.equal(sourcePackage.derivedBlobs.some((blob) => blob.role.startsWith("source-tile-")), true);
     assert.equal(sourcePackage.derivedBlobs.some((blob) => blob.role === "review-crop-title" && blob.sourceRegion?.pageId === "page-1"), true);
     assert.equal(sourcePackage.derivedBlobs.some((blob) => blob.role === "mask-alpha"), true);
+    assert.deepEqual(derivativeKinds, new Set([
+      "ocr-tokens",
+      "text-ink-mask",
+      "baseline-candidates",
+      "edge-map",
+      "connected-components",
+      "contours",
+      "color-samples",
+      "gradient-samples",
+      "alpha-estimates",
+      "shadow-candidates",
+      "table-grid-candidates",
+      "chart-primitive-candidates",
+      "vectorization-candidates",
+      "localized-crops",
+    ]));
+    assert.equal(sourcePackage.localizedAssets.some((asset) => asset.purpose === "review-crop" && asset.parentDerivativeRef.endsWith("localized-crops")), true);
+    assert.equal(sourcePackage.localizedAssets.some((asset) => asset.purpose === "optimization-tile"), true);
+    assert.doesNotThrow(() => assertFreshAnalysisDerivativeCache(sourcePackage));
     const validation = validateV2Contracts(sourcePackage);
     assert.equal(validation.ok, true, JSON.stringify(validation.errors, null, 2));
   });
@@ -87,5 +112,30 @@ test("Source Package canonicalPixels 与页面画布不一致时拒绝读取", a
     const result = await normalizeSource({ sourcePath, sourcePackagePath: packagePath });
     result.sourcePackage.pages[0].canvas.width = 3;
     await assert.rejects(() => readCanonicalPixels(result), /规范化像素尺寸与页面画布不一致/);
+  });
+});
+
+test("Source analysis derivative cache 拒绝 digest mismatch、stale generator 和缺失 provenance", async () => {
+  await withTemporaryDirectory(async (directory) => {
+    const sourcePath = path.join(directory, "source.png");
+    const packagePath = path.join(directory, "source-package.json");
+    await sharp({ create: { width: 12, height: 8, channels: 3, background: "#ABCDEF" } }).png().toFile(sourcePath);
+    const result = await normalizeSource({
+      sourcePath,
+      sourcePackagePath: packagePath,
+      analysisDerivatives: true,
+    });
+
+    const digestMismatch = JSON.parse(JSON.stringify(result.sourcePackage));
+    digestMismatch.analysisDerivatives[0].canonicalPixelDigest = "sha256:" + "f".repeat(64);
+    assert.throws(() => assertFreshAnalysisDerivativeCache(digestMismatch), /canonical digest 不匹配/);
+
+    const staleGenerator = JSON.parse(JSON.stringify(result.sourcePackage));
+    staleGenerator.analysisDerivatives[0].generator.version = "0.0.0";
+    assert.throws(() => assertFreshAnalysisDerivativeCache(staleGenerator), /generator version 已过期/);
+
+    const missingProvenance = JSON.parse(JSON.stringify(result.sourcePackage));
+    delete missingProvenance.analysisDerivatives[0].generator.parametersDigest;
+    assert.throws(() => assertFreshAnalysisDerivativeCache(missingProvenance), /缺少参数摘要/);
   });
 });

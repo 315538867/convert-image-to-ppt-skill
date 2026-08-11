@@ -92,6 +92,80 @@
         }
       }
     },
+    "patchProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["patchId", "targetNodeRef", "parameterPath", "oldValue", "newValue", "diagnosticRefs"],
+      "properties": {
+        "patchId": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "targetNodeRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+        "parameterPath": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/jsonPointer" },
+        "oldValue": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/parameterValue" },
+        "newValue": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/parameterValue" },
+        "evidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "diagnosticRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+        },
+        "iteration": { "type": "integer", "minimum": 0 },
+        "generator": { "type": "string", "minLength": 1 },
+        "risk": { "enum": ["low", "medium", "high"] }
+      }
+    },
+    "resolvedTextMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceRefs", "runs", "measurements"],
+      "properties": {
+        "evidenceRefs": { "type": "array", "uniqueItems": true, "items": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" } },
+        "runs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["range", "authorText", "observedTokens", "ocrConflict"],
+            "properties": {
+              "range": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/range" },
+              "authorText": { "type": "string" },
+              "observedTokens": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["text", "range", "box", "script", "evidenceRef"],
+                  "properties": {
+                    "text": { "type": "string" },
+                    "range": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/range" },
+                    "box": { "$ref": "urn:img2ppt:schema:v2:evidence-graph#/$defs/sourceCanvasBox" },
+                    "script": { "type": "string" },
+                    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "evidenceRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" }
+                  }
+                }
+              },
+              "ocrConflict": { "type": "boolean" }
+            }
+          }
+        },
+        "measurements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["evidenceRef", "measurement"],
+            "properties": {
+              "evidenceRef": { "$ref": "urn:img2ppt:schema:v2:shared#/$defs/identifier" },
+              "measurement": { "$ref": "urn:img2ppt:schema:v2:evidence-graph#/$defs/textMetricsMeasurement" }
+            }
+          }
+        }
+      }
+    },
     "resolvedNode": {
       "type": "object",
       "additionalProperties": false,
@@ -145,6 +219,12 @@
           "items": { "enum": ["native-flow", "positioned-clusters", "editable-runs", "vector-outline"] }
         },
         "evidenceClosure": { "$ref": "#/$defs/evidenceClosure" },
+        "patchProvenance": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/patchProvenance" }
+        },
+        "fitConstraints": { "type": "array", "items": { "$ref": "urn:img2ppt:schema:v2:reconstruction-spec#/$defs/fitConstraint" } },
+        "textMetrics": { "$ref": "#/$defs/resolvedTextMetrics" },
         "consumedAuthorFields": {
           "type": "array",
           "minItems": 1,
