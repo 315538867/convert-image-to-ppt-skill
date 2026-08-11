@@ -5,6 +5,59 @@ description: 使用 V2 源图事实与作者契约，将演示文稿截图、导
 
 # 图片转可编辑 PPT V2
 
+## 功能介绍
+
+本 Skill 将演示文稿截图、导出幻灯片图片、设计稿或扫描页面重建为可编辑的 PowerPoint。它适合需要保留文字内容、字素度量、布局几何、颜色、透明度、渐变、阴影、蒙版、图标轮廓、表格、图表原语、路径和连接线的图片转 PPT 任务。
+
+输入是源图以及作者编写的 V2 `Reconstruction Spec` 和 `Evidence Graph`；运行时依次完成 Source Package 规范化、场景编译、Backend Plan 规划、PPTX 渲染、逐页视觉验证、对象清单检查、编辑性检查、包安全检查和事务化发布。输出包括可编辑 PPTX、Object Manifest、Verification Result、逐页 preview/diff、source overlay、review sheet 和 Delivery Manifest。
+
+本 Skill 优先保留可编辑文字、形状、路径、表格、连接线和图表视觉原语。它不会把整页截图、文字截图或简单图标截图冒充为可编辑重建结果；无法证明的图表数据保持 `dataSemantics: "unknown"`，不支持的视觉能力必须显式拒绝或使用已批准的原始图片降级。
+
+## 使用说明
+
+### 前置条件
+
+- Node.js `>=20.9.0`。
+- 一张源图，支持 PNG、JPEG 等由运行时解码的图片格式。
+- 一个作者契约 JSON，至少包含 `Reconstruction Spec` 和 `Evidence Graph`；作者契约不得写入运行状态或验证结论。
+
+### 标准运行
+
+在已安装 Skill 的目录中执行：
+
+```bash
+node scripts/preflight.mjs
+node scripts/image2ppt.mjs <source-image> \
+  --contracts <v2-author-contracts.json> \
+  --workspace <workspace-dir> \
+  --run-id <run-id>
+```
+
+源码项目中也可以从项目根执行同一流程：
+
+```bash
+node packages/cli/src/image2ppt.mjs <source-image> \
+  --contracts <v2-author-contracts.json> \
+  --workspace <workspace-dir> \
+  --run-id <run-id>
+```
+
+命令成功时会返回 `runDir`、PPTX、Verification Result 和 Delivery Manifest 路径；只有 `Verification Result.status` 为 `passed` 且 `current` 指向已发布 Delivery Manifest 时，才可以交付 PPTX。失败时命令返回非零状态，保留运行目录和诊断，不生成成功发布指针。
+
+### 结果检查
+
+交付前必须查看 `runs/<run-id>/previews/`、`diffs/`、`source-overlay.png`、`review-sheet.png` 和 `verification-result.json`。重点确认文字换行与基线、局部颜色与效果、表格/连接线结构、对象映射和编辑性门均通过；不能只看 PPTX 文件是否生成。
+
+### 契约与质量规则
+
+作者开始编写前必须阅读 `references/v2-authoring-contract.md`；涉及精度验收时阅读 `references/accuracy-rules.md` 和 `references/layout-rules.md`。修改契约后先运行：
+
+```bash
+node packages/core/src/validate-v2-contracts.mjs authoring-contracts.json
+```
+
+运行时可在作者声明的范围内使用独立 optimizer patch，但不会修改源图事实或作者成功状态。独立 golden corpus 只用于额外质量门，renderer 自举样例不能证明真实图片还原能力。
+
 将 Source Package 记录的规范化像素视为唯一源图事实。开始编写前，必须完整阅读 `references/v2-authoring-contract.md`。JSON Schema 是字段结构的最终权威：
 
 - `schema/v2/reconstruction-spec.schema.json`
